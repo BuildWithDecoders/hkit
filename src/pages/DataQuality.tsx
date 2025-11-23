@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, TrendingUp, TrendingDown } from "lucide-react";
+import { CompletenessTrendChart } from "@/components/data-quality/CompletenessTrendChart";
 
 const facilityScores = [
   { name: "General Hospital Ilorin", score: 95, trend: "up", change: "+3%" },
@@ -118,26 +119,7 @@ const DataQuality = () => {
           </div>
         </Card>
 
-        <Card className="p-6 border-border">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Benchmarking Insights</h3>
-          <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-              <p className="text-sm font-medium text-foreground mb-2">Top Performer</p>
-              <p className="text-lg font-bold text-primary">General Hospital Ilorin</p>
-              <p className="text-xs text-muted-foreground mt-1">95% completeness score</p>
-            </div>
-            <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
-              <p className="text-sm font-medium text-foreground mb-2">Needs Attention</p>
-              <p className="text-lg font-bold text-warning">5 facilities below 75%</p>
-              <p className="text-xs text-muted-foreground mt-1">Outreach recommended</p>
-            </div>
-            <div className="p-4 rounded-lg bg-success/10 border border-success/20">
-              <p className="text-sm font-medium text-foreground mb-2">Most Improved</p>
-              <p className="text-lg font-bold text-success">Private Clinic Offa</p>
-              <p className="text-xs text-muted-foreground mt-1">+5% this week</p>
-            </div>
-          </div>
-        </Card>
+        <CompletenessTrendChart />
       </div>
     </div>
   );
