@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Copy, Key, Plus, Book, Code2, Webhook } from "lucide-react";
 import { toast } from "sonner";
+import { SandboxConsole } from "@/components/developer/SandboxConsole";
 
 const apiKeys = [
   { id: 1, name: "Production Key - EMR Integration", key: "hkit_prod_abc123...", created: "2024-11-01", lastUsed: "2 min ago", status: "active" },
@@ -149,26 +150,7 @@ const Developer = () => {
         <TabsContent value="sandbox" className="mt-6">
           <Card className="p-6 border-border">
             <h3 className="font-semibold text-foreground mb-4">API Testing Console</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">Endpoint</label>
-                <Input
-                  placeholder="https://api.hkit.kwara.gov.ng/fhir/Patient"
-                  className="bg-secondary border-border"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">Request Body</label>
-                <textarea
-                  className="w-full h-64 bg-secondary border border-border rounded-lg p-4 text-sm font-mono text-foreground resize-none"
-                  placeholder="Enter FHIR resource JSON..."
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button className="bg-primary hover:bg-primary/90">Send Request</Button>
-                <Button variant="outline" className="border-border">Clear</Button>
-              </div>
-            </div>
+            <SandboxConsole />
           </Card>
         </TabsContent>
 

@@ -2,6 +2,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, TrendingUp, TrendingDown } from "lucide-react";
 import { CompletenessTrendChart } from "@/components/data-quality/CompletenessTrendChart";
+import { ErrorDistributionChart } from "@/components/data-quality/ErrorDistributionChart";
+import { DataQualityHeatmap } from "@/components/data-quality/DataQualityHeatmap";
 
 const facilityScores = [
   { name: "General Hospital Ilorin", score: 95, trend: "up", change: "+3%" },
@@ -10,14 +12,6 @@ const facilityScores = [
   { name: "Private Clinic Offa", score: 85, trend: "up", change: "+5%" },
   { name: "Community Health Centre", score: 78, trend: "down", change: "-4%" },
   { name: "Maternity Hospital", score: 72, trend: "up", change: "+2%" },
-];
-
-const missingFields = [
-  { field: "Patient.birthDate", count: 234, percentage: 12 },
-  { field: "Observation.effectiveDateTime", count: 189, percentage: 9 },
-  { field: "Encounter.serviceProvider", count: 156, percentage: 8 },
-  { field: "MedicationRequest.dosageInstruction", count: 142, percentage: 7 },
-  { field: "Condition.onsetDateTime", count: 128, percentage: 6 },
 ];
 
 const DataQuality = () => {
@@ -53,6 +47,8 @@ const DataQuality = () => {
           <p className="text-sm text-muted-foreground">79.7% compliance rate</p>
         </Card>
       </div>
+
+      <DataQualityHeatmap />
 
       <Card className="p-6 border-border">
         <h3 className="text-lg font-semibold text-foreground mb-4">Facility Completeness Scores</h3>
@@ -99,26 +95,7 @@ const DataQuality = () => {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6 border-border">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Common Missing Fields</h3>
-          <div className="space-y-4">
-            {missingFields.map((field, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-foreground font-mono">{field.field}</span>
-                  <span className="text-sm text-muted-foreground">{field.count} records</span>
-                </div>
-                <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-destructive rounded-full"
-                    style={{ width: `${field.percentage * 8}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
+        <ErrorDistributionChart /> 
         <CompletenessTrendChart />
       </div>
     </div>
