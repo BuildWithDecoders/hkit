@@ -24,6 +24,13 @@ import Unauthorized from "./pages/Unauthorized";
 
 const queryClient = new QueryClient();
 
+// Define role constants for RBAC
+const MoH_ROLES = ["MoH"];
+const FACILITY_ROLES = ["FacilityAdmin"];
+const DEVELOPER_ROLES = ["Developer"];
+const SHARED_ROLES = ["MoH", "FacilityAdmin", "Developer"];
+const MOH_FACILITY_ROLES = ["MoH", "FacilityAdmin"];
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -37,24 +44,37 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
 
-            {/* Protected Routes Group */}
+            {/* Main Protected Route (Requires Authentication and provides AppLayout) */}
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
+                
                 {/* MoH Routes (Full Access) */}
-                <Route path="/dashboard" element={<CommandCenter />} />
-                <Route path="/facilities" element={<Facilities />} />
-                <Route path="/interoperability" element={<Interoperability />} />
-                <Route path="/data-quality" element={<DataQuality />} />
-                <Route path="/governance" element={<Governance />} />
-                <Route path="/audit" element={<Audit />} />
-                <Route path="/health" element={<SystemHealth />} />
+                <Route element={<ProtectedRoute allowedRoles={MoH_ROLES} />}>
+                  <Route path="/dashboard" element={<CommandCenter />} />
+                  <Route path="/facilities" element={<Facilities />} />
+                  <Route path="/interoperability" element={<Interoperability />} />
+                  <Route path="/health" element={<SystemHealth />} />
+                </Route>
+
+                {/* Shared MoH/Facility Admin Routes */}
+                <Route element={<ProtectedRoute allowedRoles={MOH_FACILITY_ROLES} />}>
+                  <Route path="/data-quality" element={<DataQuality />} />
+                  <Route path="/governance" element={<Governance />} />
+                </Route>
                 
-                {/* Developer Routes */}
-                <Route path="/developer" element={<Developer />} /> 
-                
-                {/* Role-specific Dashboards */}
-                <Route path="/facility-dashboard" element={<FacilityDashboard />} /> 
-                <Route path="/developer-dashboard" element={<DeveloperDashboard />} /> 
+                {/* Shared All Roles Routes (Logs, Developer Portal) */}
+                <Route element={<ProtectedRoute allowedRoles={SHARED_ROLES} />}>
+                  <Route path="/audit" element={<Audit />} />
+                  <Route path="/developer" element={<Developer />} />
+                </Route>
+
+                {/* Dedicated Dashboards */}
+                <Route element={<ProtectedRoute allowedRoles={FACILITY_ROLES} />}>
+                  <Route path="/facility-dashboard" element={<FacilityDashboard />} />
+                </Route>
+                <Route element={<ProtectedRoute allowedRoles={DEVELOPER_ROLES} />}>
+                  <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
+                </Route>
               </Route>
             </Route>
 
