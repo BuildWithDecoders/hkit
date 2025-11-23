@@ -45,7 +45,7 @@ const MoH_MENU: MenuItem[] = [
 ];
 
 const FACILITY_ADMIN_MENU: MenuItem[] = [
-  { title: "Facility Dashboard", url: "/facility-dashboard", icon: LayoutDashboard },
+  { title: "Facility Dashboard", url: "/facility-dashboard", icon: Building2 }, // Changed icon
   { title: "Data Quality Score", url: "/data-quality", icon: Database },
   { title: "API & Integrations", url: "/developer", icon: Key },
   { title: "User Management", url: "/governance", icon: Users },
@@ -54,9 +54,7 @@ const FACILITY_ADMIN_MENU: MenuItem[] = [
 
 const DEVELOPER_MENU: MenuItem[] = [
   { title: "Developer Dashboard", url: "/developer-dashboard", icon: LayoutDashboard },
-  { title: "API Keys", url: "/developer", icon: Key },
-  { title: "Webhooks", url: "/developer", icon: Network },
-  { title: "Sandbox Console", url: "/developer", icon: Code2 },
+  { title: "Developer Portal", url: "/developer", icon: Code2 }, // Consolidated links
   { title: "API Logs & Analytics", url: "/audit", icon: ScrollText },
 ];
 
