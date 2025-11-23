@@ -9,6 +9,9 @@ import {
   Shield,
   ScrollText,
   Activity,
+  LogOut,
+  Users,
+  Key,
 } from "lucide-react";
 import {
   Sidebar,
@@ -21,21 +24,61 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useAuth, UserRole } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
 
-const menuItems = [
+interface MenuItem {
+  title: string;
+  url: string;
+  icon: React.ElementType;
+}
+
+const MoH_MENU: MenuItem[] = [
   { title: "Command Center", url: "/dashboard", icon: LayoutDashboard },
   { title: "Facility Registry", url: "/facilities", icon: Building2 },
   { title: "Interoperability", url: "/interoperability", icon: Network },
   { title: "Data Quality", url: "/data-quality", icon: Database },
-  { title: "Developer Portal", url: "/developer", icon: Code2 },
   { title: "Consent & Identity", url: "/governance", icon: Shield },
   { title: "Audit Logs", url: "/audit", icon: ScrollText },
   { title: "System Health", url: "/health", icon: Activity },
+  { title: "Developer Portal", url: "/developer", icon: Code2 },
 ];
+
+const FACILITY_ADMIN_MENU: MenuItem[] = [
+  { title: "Facility Dashboard", url: "/facility-dashboard", icon: LayoutDashboard },
+  { title: "Data Quality Score", url: "/data-quality", icon: Database },
+  { title: "API & Integrations", url: "/developer", icon: Key },
+  { title: "User Management", url: "/governance", icon: Users },
+  { title: "Facility Audit Logs", url: "/audit", icon: ScrollText },
+];
+
+const DEVELOPER_MENU: MenuItem[] = [
+  { title: "Developer Dashboard", url: "/developer-dashboard", icon: LayoutDashboard },
+  { title: "API Keys", url: "/developer", icon: Key },
+  { title: "Webhooks", url: "/developer", icon: Network },
+  { title: "Sandbox Console", url: "/developer", icon: Code2 },
+  { title: "API Logs & Analytics", url: "/audit", icon: ScrollText },
+];
+
+const getMenuItems = (role: UserRole): MenuItem[] => {
+  switch (role) {
+    case "MoH":
+      return MoH_MENU;
+    case "FacilityAdmin":
+      return FACILITY_ADMIN_MENU;
+    case "Developer":
+      return DEVELOPER_MENU;
+    default:
+      return [];
+  }
+};
 
 export function AppSidebar() {
   const { open } = useSidebar();
   const location = useLocation();
+  const { role, logout, user } = useAuth();
+
+  const menuItems = getMenuItems(role);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
@@ -55,7 +98,9 @@ export function AppSidebar() {
         </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground">Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-muted-foreground">
+            {role === "MoH" ? "Governance" : user?.facility || user?.name}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
@@ -82,6 +127,18 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      
+      {/* Logout Button at the bottom */}
+      <div className="p-4 border-t border-border">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={logout}
+        >
+          <LogOut className="w-5 h-5 mr-3" />
+          {open && <span>Sign Out</span>}
+        </Button>
+      </div>
     </Sidebar>
   );
 }
