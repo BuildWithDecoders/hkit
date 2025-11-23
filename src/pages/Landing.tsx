@@ -222,7 +222,7 @@ const Landing = () => {
                   <Button
                     size="lg"
                     className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg shadow-[0_0_30px_hsl(var(--primary-glow)/0.3)]"
-                    onClick={() => navigate("/facilities")}
+                    onClick={() => navigate("/register")}
                   >
                     Register Your Facility
                   </Button>
@@ -246,11 +246,13 @@ const Landing = () => {
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <img 
-                src="/Hkit.png" 
-                alt="Hkit Logo" 
-                className="h-10 w-auto"
-              />
+              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-[0_0_15px_hsl(var(--primary-glow)/0.5)]">
+                <Activity className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Hkit</p>
+                <p className="text-sm text-muted-foreground">Kwara State Health Infrastructure</p>
+              </div>
             </div>
             <p className="text-sm text-muted-foreground">
               © 2024 Kwara State Ministry of Health. All rights reserved.

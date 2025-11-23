@@ -8,6 +8,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/layout/AppLayout";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import Register from "./pages/Register"; // Import Register
 import CommandCenter from "./pages/CommandCenter";
 import Facilities from "./pages/Facilities";
 import Interoperability from "./pages/Interoperability";
@@ -31,6 +32,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} /> {/* Add Register Route */}
             <Route path="/unauthorized" element={<Unauthorized />} />
 
             {/* Protected Routes Group */}
