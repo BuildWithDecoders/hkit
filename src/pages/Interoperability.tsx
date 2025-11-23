@@ -2,16 +2,13 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, XCircle, AlertTriangle, RefreshCw, Eye } from "lucide-react";
+import { CheckCircle2, XCircle, AlertTriangle, RefreshCw, Eye, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-const fhirEvents = [
-  { id: 1, resource: "Patient", operation: "CREATE", facility: "General Hospital Ilorin", status: "success", timestamp: "2024-11-23 14:23:45" },
-  { id: 2, resource: "Observation", operation: "UPDATE", facility: "Baptist Medical Centre", status: "success", timestamp: "2024-11-23 14:23:42" },
-  { id: 3, resource: "Encounter", operation: "CREATE", facility: "Sobi Specialist Hospital", status: "failed", timestamp: "2024-11-23 14:23:38" },
-  { id: 4, resource: "MedicationRequest", operation: "CREATE", facility: "General Hospital Ilorin", status: "success", timestamp: "2024-11-23 14:23:35" },
-  { id: 5, resource: "Condition", operation: "UPDATE", facility: "Private Clinic Offa", status: "warning", timestamp: "2024-11-23 14:23:30" },
-];
+import { useFhirEvents } from "@/hooks/use-hkit-data";
+import { useState } from "react";
+import { MessageInspectorDialog } from "@/components/interoperability/MessageInspectorDialog";
+import { getMockMessageDetails, FhirEvent } from "@/api/hkit";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const validationIssues = [
   { id: 1, message: "Missing required field: patient.identifier", resource: "Patient", facility: "General Hospital", severity: "error" },
@@ -20,6 +17,77 @@ const validationIssues = [
 ];
 
 const Interoperability = () => {
+  const { data: fhirEvents, isLoading, isError } = useFhirEvents();
+  const [isInspectorOpen, setIsInspectorOpen] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState(null);
+
+  const handleViewDetails = (event: FhirEvent) => {
+    const details = getMockMessageDetails(event.id);
+    if (details) {
+      setSelectedMessage(details);
+      setIsInspectorOpen(true);
+    }
+  };
+
+  const renderEventStream = () => {
+    if (isLoading) {
+      return (
+        <div className="p-4 space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <Card key={i} className="p-4 border-border">
+              <Skeleton className="h-6 w-full" />
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
+    if (isError || !fhirEvents) {
+      return (
+        <div className="p-4 text-center text-destructive">
+          <AlertTriangle className="w-6 h-6 mx-auto mb-2" />
+          Failed to load FHIR event stream.
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-4 space-y-2">
+        {fhirEvents.map((event) => (
+          <div
+            key={event.id}
+            className="flex items-center justify-between p-4 rounded-lg bg-secondary border border-border hover:border-primary/50 transition-colors"
+          >
+            <div className="flex items-center gap-4 flex-1">
+              <Badge
+                variant="outline"
+                className={
+                  event.status === "success"
+                    ? "bg-success/10 text-success border-success/20"
+                    : event.status === "failed"
+                    ? "bg-destructive/10 text-destructive border-destructive/20"
+                    : "bg-warning/10 text-warning border-warning/20"
+                }
+              >
+                {event.status}
+              </Badge>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">
+                  {event.resource} - {event.operation}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">{event.facility}</p>
+              </div>
+              <span className="text-xs text-muted-foreground">{event.timestamp}</span>
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => handleViewDetails(event)}>
+              <Eye className="w-4 h-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -32,7 +100,7 @@ const Interoperability = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Events</p>
-              <p className="text-2xl font-bold text-foreground mt-1">45,234</p>
+              <p className="text-2xl font-bold text-foreground mt-1">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "45,234"}</p>
             </div>
             <RefreshCw className="w-8 h-8 text-primary" />
           </div>
@@ -41,7 +109,7 @@ const Interoperability = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Successful</p>
-              <p className="text-2xl font-bold text-success mt-1">44,891</p>
+              <p className="text-2xl font-bold text-success mt-1">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "44,891"}</p>
             </div>
             <CheckCircle2 className="w-8 h-8 text-success" />
           </div>
@@ -50,7 +118,7 @@ const Interoperability = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Failed</p>
-              <p className="text-2xl font-bold text-destructive mt-1">127</p>
+              <p className="text-2xl font-bold text-destructive mt-1">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "127"}</p>
             </div>
             <XCircle className="w-8 h-8 text-destructive" />
           </div>
@@ -59,7 +127,7 @@ const Interoperability = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Warnings</p>
-              <p className="text-2xl font-bold text-warning mt-1">216</p>
+              <p className="text-2xl font-bold text-warning mt-1">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "216"}</p>
             </div>
             <AlertTriangle className="w-8 h-8 text-warning" />
           </div>
@@ -83,39 +151,7 @@ const Interoperability = () => {
               </div>
             </div>
             <ScrollArea className="h-[500px]">
-              <div className="p-4 space-y-2">
-                {fhirEvents.map((event) => (
-                  <div
-                    key={event.id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-secondary border border-border hover:border-primary/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      <Badge
-                        variant="outline"
-                        className={
-                          event.status === "success"
-                            ? "bg-success/10 text-success border-success/20"
-                            : event.status === "failed"
-                            ? "bg-destructive/10 text-destructive border-destructive/20"
-                            : "bg-warning/10 text-warning border-warning/20"
-                        }
-                      >
-                        {event.status}
-                      </Badge>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">
-                          {event.resource} - {event.operation}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">{event.facility}</p>
-                      </div>
-                      <span className="text-xs text-muted-foreground">{event.timestamp}</span>
-                    </div>
-                    <Button size="sm" variant="ghost">
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+              {renderEventStream()}
             </ScrollArea>
           </Card>
         </TabsContent>
@@ -196,6 +232,12 @@ const Interoperability = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      <MessageInspectorDialog 
+        isOpen={isInspectorOpen}
+        onOpenChange={setIsInspectorOpen}
+        messageData={selectedMessage}
+      />
     </div>
   );
 };

@@ -1,109 +1,31 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Loader2, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FacilityCardList } from "@/components/facilities/FacilityCardList";
 import { useState, useMemo } from "react";
-import { toast } from "sonner";
-
-interface Facility {
-  id: number;
-  name: string;
-  lga: string;
-  type: string;
-  status: "verified" | "pending" | "rejected";
-  compliance: number;
-  administrators: number;
-  apiActivity: string;
-  lastSync: string;
-}
-
-const initialFacilities: Facility[] = [
-  {
-    id: 1,
-    name: "General Hospital Ilorin",
-    lga: "Ilorin West",
-    type: "Public",
-    status: "verified",
-    compliance: 92,
-    administrators: 3,
-    apiActivity: "2.3k req/day",
-    lastSync: "2 min ago",
-  },
-  {
-    id: 2,
-    name: "Baptist Medical Centre",
-    lga: "Ilorin South",
-    type: "Private",
-    status: "verified",
-    compliance: 88,
-    administrators: 2,
-    apiActivity: "1.8k req/day",
-    lastSync: "5 min ago",
-  },
-  {
-    id: 3,
-    name: "Sobi Specialist Hospital",
-    lga: "Ilorin East",
-    type: "Public",
-    status: "verified",
-    compliance: 95,
-    administrators: 4,
-    apiActivity: "3.1k req/day",
-    lastSync: "1 min ago",
-  },
-  {
-    id: 4,
-    name: "Private Clinic Offa",
-    lga: "Offa",
-    type: "Private",
-    status: "pending",
-    compliance: 0,
-    administrators: 0,
-    apiActivity: "N/A",
-    lastSync: "N/A",
-  },
-  {
-    id: 5,
-    name: "Community Health Centre",
-    lga: "Asa",
-    type: "Public",
-    status: "pending",
-    compliance: 0,
-    administrators: 0,
-    apiActivity: "N/A",
-    lastSync: "N/A",
-  },
-];
+import { useFacilities, useApproveFacility, useRejectFacility } from "@/hooks/use-hkit-data";
+import { Facility } from "@/api/hkit";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Facilities = () => {
   const [activeTab, setActiveTab] = useState("all");
-  const [facilities, setFacilities] = useState<Facility[]>(initialFacilities);
+  
+  const { data: facilities, isLoading, isError } = useFacilities();
+  const approveMutation = useApproveFacility();
+  const rejectMutation = useRejectFacility();
 
   const handleApprove = (id: number, name: string) => {
-    setFacilities(prev => 
-      prev.map(f => 
-        f.id === id ? { ...f, status: "verified", compliance: 70, administrators: 1 } : f
-      )
-    );
-    toast.success(`Facility ${name} approved!`, {
-      description: "The facility administrator will be notified to complete setup.",
-    });
+    approveMutation.mutate(id);
   };
 
   const handleReject = (id: number, name: string) => {
-    setFacilities(prev => 
-      prev.map(f => 
-        f.id === id ? { ...f, status: "rejected" } : f
-      )
-    );
-    toast.error(`Facility ${name} rejected.`, {
-      description: "The facility contact has been notified.",
-    });
+    rejectMutation.mutate(id);
   };
 
   const filteredFacilities = useMemo(() => {
+    if (!facilities) return [];
     switch (activeTab) {
       case 'verified':
         return facilities.filter(f => f.status === 'verified');
@@ -117,10 +39,48 @@ const Facilities = () => {
     }
   }, [facilities, activeTab]);
 
-  const verifiedCount = facilities.filter(f => f.status === 'verified').length;
-  const pendingCount = facilities.filter(f => f.status === 'pending').length;
-  const rejectedCount = facilities.filter(f => f.status === 'rejected').length;
-  const totalCount = facilities.length;
+  const verifiedCount = facilities?.filter(f => f.status === 'verified').length || 0;
+  const pendingCount = facilities?.filter(f => f.status === 'pending').length || 0;
+  const rejectedCount = facilities?.filter(f => f.status === 'rejected').length || 0;
+  const totalCount = facilities?.length || 0;
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="p-6 border-border">
+              <Skeleton className="h-6 w-3/4 mb-4" />
+              <div className="grid grid-cols-4 gap-4">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
+    if (isError) {
+      return (
+        <Card className="p-8 border-destructive/20 bg-destructive/10 text-center">
+          <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-3" />
+          <p className="text-destructive">Error loading facility data. Please try refreshing.</p>
+        </Card>
+      );
+    }
+
+    return (
+      <FacilityCardList 
+        facilities={filteredFacilities} 
+        showActions={true} 
+        onApprove={handleApprove}
+        onReject={handleReject}
+      />
+    );
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -158,42 +118,17 @@ const Facilities = () => {
           <TabsTrigger value="rejected">Rejected ({rejectedCount})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all" className="mt-6">
-          <FacilityCardList 
-            facilities={filteredFacilities} 
-            showActions={true} 
-            onApprove={handleApprove}
-            onReject={handleReject}
-          />
-        </TabsContent>
-
-        <TabsContent value="verified" className="mt-6">
-          <FacilityCardList 
-            facilities={filteredFacilities} 
-            showActions={true} 
-            onApprove={handleApprove}
-            onReject={handleReject}
-          />
-        </TabsContent>
-
-        <TabsContent value="pending" className="mt-6">
-          <FacilityCardList 
-            facilities={filteredFacilities} 
-            showActions={true} 
-            onApprove={handleApprove}
-            onReject={handleReject}
-          />
-        </TabsContent>
-        
-        <TabsContent value="rejected" className="mt-6">
-          <FacilityCardList 
-            facilities={filteredFacilities} 
-            showActions={true} 
-            onApprove={handleApprove}
-            onReject={handleReject}
-          />
+        <TabsContent value={activeTab} className="mt-6">
+          {renderContent()}
         </TabsContent>
       </Tabs>
+      
+      {(approveMutation.isPending || rejectMutation.isPending) && (
+        <div className="fixed bottom-4 right-4 p-3 bg-primary text-primary-foreground rounded-lg shadow-lg flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Processing facility update...
+        </div>
+      )}
     </div>
   );
 };

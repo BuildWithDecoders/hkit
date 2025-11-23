@@ -3,20 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Clock, XCircle, MapPin, Users } from "lucide-react";
-import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-
-interface Facility {
-  id: number;
-  name: string;
-  lga: string;
-  type: string;
-  status: "verified" | "pending" | "rejected";
-  compliance: number;
-  administrators: number;
-  apiActivity: string;
-  lastSync: string;
-}
+import { Facility } from "@/api/hkit"; // Import Facility type
 
 interface FacilityCardListProps {
   facilities: Facility[];
