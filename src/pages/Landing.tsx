@@ -246,11 +246,13 @@ const Landing = () => {
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-[0_0_15px_hsl(var(--primary-glow)/0.5)]">
-                <Activity className="w-6 h-6 text-primary-foreground" />
-              </div>
+              <img 
+                src="/Hkit.png" 
+                alt="Hkit Logo" 
+                className="h-10 w-auto shadow-[0_0_15px_hsl(var(--primary-glow)/0.5)] rounded-lg"
+              />
               <div>
-                <p className="font-bold text-foreground">Hkit</p>
+                <p className="font-bold text-foreground sr-only">Hkit</p>
                 <p className="text-sm text-muted-foreground">Kwara State Health Infrastructure</p>
               </div>
             </div>
