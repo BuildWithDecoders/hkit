@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import CommandCenter from "./pages/CommandCenter";
 import Facilities from "./pages/Facilities";
+import FacilityDetails from "./pages/FacilityDetails"; // Import new page
 import Interoperability from "./pages/Interoperability";
 import DataQuality from "./pages/DataQuality";
 import Developer from "./pages/Developer";
@@ -52,6 +53,7 @@ const App = () => (
                 <Route element={<ProtectedRoute allowedRoles={MoH_ROLES} />}>
                   <Route path="/dashboard" element={<CommandCenter />} />
                   <Route path="/facilities" element={<Facilities />} />
+                  <Route path="/facilities/:id" element={<FacilityDetails />} /> {/* New Route */}
                   <Route path="/interoperability" element={<Interoperability />} />
                   <Route path="/health" element={<SystemHealth />} />
                 </Route>

@@ -2,8 +2,9 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, CheckCircle2, Clock, XCircle, MapPin, Users } from "lucide-react";
+import { CheckCircle2, Clock, XCircle, MapPin, Users } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface Facility {
   id: number;
@@ -23,6 +24,8 @@ interface FacilityCardListProps {
 }
 
 const FacilityCardList: React.FC<FacilityCardListProps> = ({ facilities, showActions }) => {
+  const navigate = useNavigate();
+
   const handleApprove = (facilityName: string) => {
     toast.success(`Facility ${facilityName} approved!`, {
       description: "The facility administrator will be notified to complete setup.",
@@ -35,6 +38,10 @@ const FacilityCardList: React.FC<FacilityCardListProps> = ({ facilities, showAct
       description: "The facility contact has been notified.",
     });
     // In a real app, this would trigger a state update/API call
+  };
+
+  const handleViewDetails = (facilityId: number) => {
+    navigate(`/facilities/${facilityId}`);
   };
 
   if (facilities.length === 0) {
@@ -126,10 +133,10 @@ const FacilityCardList: React.FC<FacilityCardListProps> = ({ facilities, showAct
                   </>
                 ) : (
                   <>
-                    <Button size="sm" variant="outline" className="border-border">
+                    <Button size="sm" variant="outline" className="border-border" onClick={() => handleViewDetails(facility.id)}>
                       View Details
                     </Button>
-                    <Button size="sm" variant="outline" className="border-border">
+                    <Button size="sm" variant="outline" className="border-border" onClick={() => handleViewDetails(facility.id)}>
                       Manage
                     </Button>
                   </>
