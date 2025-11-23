@@ -37,11 +37,8 @@ const MoH_MENU: MenuItem[] = [
   { title: "Command Center", url: "/dashboard", icon: LayoutDashboard },
   { title: "Facility Registry", url: "/facilities", icon: Building2 },
   { title: "Interoperability", url: "/interoperability", icon: Network },
-  { title: "Data Quality", url: "/data-quality", icon: Database },
-  { title: "Consent & Identity", url: "/governance", icon: Shield },
-  { title: "Audit Logs", url: "/audit", icon: ScrollText },
   { title: "System Health", url: "/health", icon: Activity },
-  { title: "Developer Portal", url: "/developer", icon: Code2 },
+  // Removed Data Quality, Consent & Identity, Audit Logs, and Developer Portal for a cleaner MoH focus.
 ];
 
 const FACILITY_ADMIN_MENU: MenuItem[] = [
@@ -93,7 +90,7 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-muted-foreground">
-            {role === "MoH" ? "Governance" : user?.facility || user?.name}
+            {role === "MoH" ? "Oversight" : user?.facility || user?.name}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
