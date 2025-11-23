@@ -21,24 +21,12 @@ interface Facility {
 interface FacilityCardListProps {
   facilities: Facility[];
   showActions: boolean;
+  onApprove: (id: number, name: string) => void;
+  onReject: (id: number, name: string) => void;
 }
 
-const FacilityCardList: React.FC<FacilityCardListProps> = ({ facilities, showActions }) => {
+const FacilityCardList: React.FC<FacilityCardListProps> = ({ facilities, showActions, onApprove, onReject }) => {
   const navigate = useNavigate();
-
-  const handleApprove = (facilityName: string) => {
-    toast.success(`Facility ${facilityName} approved!`, {
-      description: "The facility administrator will be notified to complete setup.",
-    });
-    // In a real app, this would trigger a state update/API call
-  };
-
-  const handleReject = (facilityName: string) => {
-    toast.error(`Facility ${facilityName} rejected.`, {
-      description: "The facility contact has been notified.",
-    });
-    // In a real app, this would trigger a state update/API call
-  };
 
   const handleViewDetails = (facilityId: number) => {
     navigate(`/facilities/${facilityId}`);
@@ -118,16 +106,31 @@ const FacilityCardList: React.FC<FacilityCardListProps> = ({ facilities, showAct
                   </div>
                 </div>
               )}
+              
+              {facility.status === "rejected" && (
+                <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+                  Registration rejected. Review required.
+                </div>
+              )}
             </div>
 
             {showActions && (
               <div className="flex gap-2 ml-4 flex-shrink-0">
                 {facility.status === "pending" ? (
                   <>
-                    <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => handleApprove(facility.name)}>
+                    <Button 
+                      size="sm" 
+                      className="bg-primary hover:bg-primary/90" 
+                      onClick={() => onApprove(facility.id, facility.name)}
+                    >
                       Approve
                     </Button>
-                    <Button size="sm" variant="outline" className="border-border" onClick={() => handleReject(facility.name)}>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="border-border" 
+                      onClick={() => onReject(facility.id, facility.name)}
+                    >
                       Reject
                     </Button>
                   </>

@@ -4,15 +4,28 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FacilityCardList } from "@/components/facilities/FacilityCardList";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { toast } from "sonner";
 
-const initialFacilities = [
+interface Facility {
+  id: number;
+  name: string;
+  lga: string;
+  type: string;
+  status: "verified" | "pending" | "rejected";
+  compliance: number;
+  administrators: number;
+  apiActivity: string;
+  lastSync: string;
+}
+
+const initialFacilities: Facility[] = [
   {
     id: 1,
     name: "General Hospital Ilorin",
     lga: "Ilorin West",
     type: "Public",
-    status: "verified" as const,
+    status: "verified",
     compliance: 92,
     administrators: 3,
     apiActivity: "2.3k req/day",
@@ -23,7 +36,7 @@ const initialFacilities = [
     name: "Baptist Medical Centre",
     lga: "Ilorin South",
     type: "Private",
-    status: "verified" as const,
+    status: "verified",
     compliance: 88,
     administrators: 2,
     apiActivity: "1.8k req/day",
@@ -34,7 +47,7 @@ const initialFacilities = [
     name: "Sobi Specialist Hospital",
     lga: "Ilorin East",
     type: "Public",
-    status: "verified" as const,
+    status: "verified",
     compliance: 95,
     administrators: 4,
     apiActivity: "3.1k req/day",
@@ -45,7 +58,7 @@ const initialFacilities = [
     name: "Private Clinic Offa",
     lga: "Offa",
     type: "Private",
-    status: "pending" as const,
+    status: "pending",
     compliance: 0,
     administrators: 0,
     apiActivity: "N/A",
@@ -56,7 +69,7 @@ const initialFacilities = [
     name: "Community Health Centre",
     lga: "Asa",
     type: "Public",
-    status: "pending" as const,
+    status: "pending",
     compliance: 0,
     administrators: 0,
     apiActivity: "N/A",
@@ -66,24 +79,48 @@ const initialFacilities = [
 
 const Facilities = () => {
   const [activeTab, setActiveTab] = useState("all");
+  const [facilities, setFacilities] = useState<Facility[]>(initialFacilities);
 
-  const verifiedCount = initialFacilities.filter(f => f.status === 'verified').length;
-  const pendingCount = initialFacilities.filter(f => f.status === 'pending').length;
-  const totalCount = initialFacilities.length;
-
-  const getFilteredFacilities = () => {
-    switch (activeTab) {
-      case 'verified':
-        return initialFacilities.filter(f => f.status === 'verified');
-      case 'pending':
-        return initialFacilities.filter(f => f.status === 'pending');
-      case 'all':
-      default:
-        return initialFacilities;
-    }
+  const handleApprove = (id: number, name: string) => {
+    setFacilities(prev => 
+      prev.map(f => 
+        f.id === id ? { ...f, status: "verified", compliance: 70, administrators: 1 } : f
+      )
+    );
+    toast.success(`Facility ${name} approved!`, {
+      description: "The facility administrator will be notified to complete setup.",
+    });
   };
 
-  const filteredFacilities = getFilteredFacilities();
+  const handleReject = (id: number, name: string) => {
+    setFacilities(prev => 
+      prev.map(f => 
+        f.id === id ? { ...f, status: "rejected" } : f
+      )
+    );
+    toast.error(`Facility ${name} rejected.`, {
+      description: "The facility contact has been notified.",
+    });
+  };
+
+  const filteredFacilities = useMemo(() => {
+    switch (activeTab) {
+      case 'verified':
+        return facilities.filter(f => f.status === 'verified');
+      case 'pending':
+        return facilities.filter(f => f.status === 'pending');
+      case 'rejected':
+        return facilities.filter(f => f.status === 'rejected');
+      case 'all':
+      default:
+        return facilities;
+    }
+  }, [facilities, activeTab]);
+
+  const verifiedCount = facilities.filter(f => f.status === 'verified').length;
+  const pendingCount = facilities.filter(f => f.status === 'pending').length;
+  const rejectedCount = facilities.filter(f => f.status === 'rejected').length;
+  const totalCount = facilities.length;
 
   return (
     <div className="p-6 space-y-6">
@@ -118,18 +155,43 @@ const Facilities = () => {
           <TabsTrigger value="all">All Facilities ({totalCount})</TabsTrigger>
           <TabsTrigger value="verified">Verified ({verifiedCount})</TabsTrigger>
           <TabsTrigger value="pending">Pending ({pendingCount})</TabsTrigger>
+          <TabsTrigger value="rejected">Rejected ({rejectedCount})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="mt-6">
-          <FacilityCardList facilities={filteredFacilities} showActions={true} />
+          <FacilityCardList 
+            facilities={filteredFacilities} 
+            showActions={true} 
+            onApprove={handleApprove}
+            onReject={handleReject}
+          />
         </TabsContent>
 
         <TabsContent value="verified" className="mt-6">
-          <FacilityCardList facilities={filteredFacilities} showActions={true} />
+          <FacilityCardList 
+            facilities={filteredFacilities} 
+            showActions={true} 
+            onApprove={handleApprove}
+            onReject={handleReject}
+          />
         </TabsContent>
 
         <TabsContent value="pending" className="mt-6">
-          <FacilityCardList facilities={filteredFacilities} showActions={true} />
+          <FacilityCardList 
+            facilities={filteredFacilities} 
+            showActions={true} 
+            onApprove={handleApprove}
+            onReject={handleReject}
+          />
+        </TabsContent>
+        
+        <TabsContent value="rejected" className="mt-6">
+          <FacilityCardList 
+            facilities={filteredFacilities} 
+            showActions={true} 
+            onApprove={handleApprove}
+            onReject={handleReject}
+          />
         </TabsContent>
       </Tabs>
     </div>
