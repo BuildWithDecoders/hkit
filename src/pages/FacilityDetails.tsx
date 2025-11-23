@@ -15,6 +15,15 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 type FacilityStatus = "verified" | "pending" | "rejected";
 
@@ -46,6 +55,15 @@ const mockFacilityDetails = {
     validationErrors: 23,
   }
 };
+
+const submissionActivityData = [
+  { hour: "08:00", submissions: 120 },
+  { hour: "10:00", submissions: 155 },
+  { hour: "12:00", submissions: 180 },
+  { hour: "14:00", submissions: 140 },
+  { hour: "16:00", submissions: 165 },
+  { hour: "18:00", submissions: 130 },
+];
 
 const FacilityDetails = () => {
   const { id } = useParams();
@@ -129,6 +147,65 @@ const FacilityDetails = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Submission Activity Chart */}
+        <Card className="lg:col-span-2 p-6 border-border">
+          <h3 className="text-lg font-semibold text-foreground mb-4">FHIR Submission Activity (Today)</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={submissionActivityData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" />
+              <YAxis stroke="hsl(var(--muted-foreground))" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "8px",
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="submissions"
+                stroke="hsl(var(--primary))"
+                strokeWidth={2}
+                dot={{ r: 4 }}
+                name="Submissions"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card>
+
+        {/* Contact Information */}
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-xl">Primary Contact</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Users className="w-5 h-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Name</p>
+                <p className="font-medium text-foreground">{facility.contact.name}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Mail className="w-5 h-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="font-medium text-foreground">{facility.contact.email}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Phone className="w-5 h-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Phone</p>
+                <p className="font-medium text-foreground">{facility.contact.phone}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Integration Details */}
         <Card className="lg:col-span-2 border-border">
           <CardHeader>
@@ -166,54 +243,24 @@ const FacilityDetails = () => {
           </CardContent>
         </Card>
 
-        {/* Contact Information */}
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="text-xl">Primary Contact</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Users className="w-5 h-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">Name</p>
-                <p className="font-medium text-foreground">{facility.contact.name}</p>
-              </div>
+        {/* Compliance and Actions */}
+        <Card className="p-6 border-border">
+          <h3 className="text-xl font-semibold text-foreground mb-4">Compliance & Governance</h3>
+          <div className="flex justify-between items-center">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">View detailed audit logs and data quality reports for this facility.</p>
             </div>
-            <div className="flex items-center gap-3">
-              <Mail className="w-5 h-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium text-foreground">{facility.contact.email}</p>
-              </div>
+            <div className="flex gap-3">
+              <Button variant="outline" className="border-border">
+                View Audit Logs
+              </Button>
+              <Button variant="outline" className="border-border">
+                View Data Quality Report
+              </Button>
             </div>
-            <div className="flex items-center gap-3">
-              <Phone className="w-5 h-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">Phone</p>
-                <p className="font-medium text-foreground">{facility.contact.phone}</p>
-              </div>
-            </div>
-          </CardContent>
+          </div>
         </Card>
       </div>
-
-      {/* Compliance and Actions */}
-      <Card className="p-6 border-border">
-        <h3 className="text-xl font-semibold text-foreground mb-4">Compliance & Governance</h3>
-        <div className="flex justify-between items-center">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">View detailed audit logs and data quality reports for this facility.</p>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline" className="border-border">
-              View Audit Logs
-            </Button>
-            <Button variant="outline" className="border-border">
-              View Data Quality Report
-            </Button>
-          </div>
-        </div>
-      </Card>
     </div>
   );
 };

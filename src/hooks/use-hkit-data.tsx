@@ -4,10 +4,13 @@ import {
   updateFacilityStatus, 
   fetchAuditLogs, 
   fetchFhirEvents,
+  fetchConsentRecords,
+  revokeConsent,
   Facility,
   FacilityStatus,
   AuditLog,
-  FhirEvent
+  FhirEvent,
+  ConsentRecord
 } from "@/api/hkit";
 import { toast } from "sonner";
 
@@ -69,5 +72,32 @@ export function useFhirEvents() {
     return useQuery<FhirEvent[]>({
         queryKey: ["fhirEvents"],
         queryFn: fetchFhirEvents,
+    });
+}
+
+// --- Governance Hooks ---
+
+export function useConsentRecords() {
+    return useQuery<ConsentRecord[]>({
+        queryKey: ["consentRecords"],
+        queryFn: fetchConsentRecords,
+    });
+}
+
+export function useRevokeConsent() {
+    const queryClient = useQueryClient();
+    return useMutation<ConsentRecord, Error, string>({
+        mutationFn: (patientId: string) => revokeConsent(patientId),
+        onSuccess: (revokedRecord) => {
+            queryClient.invalidateQueries({ queryKey: ["consentRecords"] });
+            toast.warning(`Consent revoked for patient ${revokedRecord.patientId}.`, {
+                description: "Data sharing permissions have been updated.",
+            });
+        },
+        onError: (error) => {
+            toast.error("Failed to revoke consent.", {
+                description: error.message,
+            });
+        },
     });
 }

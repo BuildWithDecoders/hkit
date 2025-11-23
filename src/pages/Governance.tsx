@@ -3,7 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, User, Shield, Clock, Check, X } from "lucide-react";
+import { Search, User, Shield, Clock, Check, X, Loader2, AlertTriangle } from "lucide-react";
+import { useConsentRecords, useRevokeConsent } from "@/hooks/use-hkit-data";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const mpiRecords = [
   { id: "KW2024001234", name: "Oluwaseun Adebayo", dob: "1985-03-15", gender: "Male", facility: "General Hospital", verified: true },
@@ -11,13 +13,105 @@ const mpiRecords = [
   { id: "KW2024001236", name: "Chukwudi Okafor", dob: "1978-11-10", gender: "Male", facility: "Sobi Hospital", verified: false },
 ];
 
-const consentRecords = [
-  { patientId: "KW2024001234", scope: "Full access", grantedTo: "Baptist Medical Centre", expiry: "2025-12-31", status: "active" },
-  { patientId: "KW2024001235", scope: "Lab results only", grantedTo: "Private Clinic Offa", expiry: "2025-06-30", status: "active" },
-  { patientId: "KW2024001236", scope: "Emergency access", grantedTo: "General Hospital", expiry: "Never", status: "revoked" },
-];
-
 const Governance = () => {
+  const { data: consentRecords, isLoading: isLoadingConsent, isError: isErrorConsent } = useConsentRecords();
+  const revokeMutation = useRevokeConsent();
+
+  const handleRevoke = (patientId: string) => {
+    revokeMutation.mutate(patientId);
+  };
+
+  const renderConsentContent = () => {
+    if (isLoadingConsent) {
+      return (
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="p-6 border-border">
+              <Skeleton className="h-10 w-full" />
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
+    if (isErrorConsent || !consentRecords) {
+      return (
+        <Card className="p-8 border-destructive/20 bg-destructive/10 text-center">
+          <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-3" />
+          <p className="text-destructive">Error loading consent data.</p>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {consentRecords.map((record, index) => (
+          <Card key={index} className="p-6 border-border">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-sm font-medium text-foreground">
+                      Patient: {record.patientId}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className={
+                        record.status === "active"
+                          ? "bg-success/10 text-success border-success/20"
+                          : "bg-destructive/10 text-destructive border-destructive/20"
+                      }
+                    >
+                      {record.status === "active" ? (
+                        <Check className="w-3 h-3 mr-1" />
+                      ) : (
+                        <X className="w-3 h-3 mr-1" />
+                      )}
+                      {record.status}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Scope: </span>
+                      <span className="text-foreground font-medium">{record.scope}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Granted To: </span>
+                      <span className="text-foreground">{record.grantedTo}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Expiry: </span>
+                      <span className="text-foreground">{record.expiry}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 ml-4 flex-shrink-0">
+                {record.status === "active" && (
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    className="border-destructive/50"
+                    onClick={() => handleRevoke(record.patientId)}
+                    disabled={revokeMutation.isPending}
+                  >
+                    {revokeMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Revoke"}
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" className="border-border">
+                  History
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -109,65 +203,7 @@ const Governance = () => {
             </div>
           </div>
 
-          <div className="space-y-3">
-            {consentRecords.map((record, index) => (
-              <Card key={index} className="p-6 border-border">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Shield className="w-6 h-6 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="text-sm font-medium text-foreground">
-                          Patient: {record.patientId}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className={
-                            record.status === "active"
-                              ? "bg-success/10 text-success border-success/20"
-                              : "bg-destructive/10 text-destructive border-destructive/20"
-                          }
-                        >
-                          {record.status === "active" ? (
-                            <Check className="w-3 h-3 mr-1" />
-                          ) : (
-                            <X className="w-3 h-3 mr-1" />
-                          )}
-                          {record.status}
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Scope: </span>
-                          <span className="text-foreground font-medium">{record.scope}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Granted To: </span>
-                          <span className="text-foreground">{record.grantedTo}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Expiry: </span>
-                          <span className="text-foreground">{record.expiry}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 ml-4">
-                    {record.status === "active" && (
-                      <Button variant="outline" size="sm" className="border-border">
-                        Revoke
-                      </Button>
-                    )}
-                    <Button variant="outline" size="sm" className="border-border">
-                      History
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+          {renderConsentContent()}
         </TabsContent>
 
         <TabsContent value="clinicians" className="mt-6">

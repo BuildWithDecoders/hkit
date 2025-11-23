@@ -184,3 +184,43 @@ const mockEvents = [
     { id: 4, resource: "MedicationRequest", operation: "CREATE", facility: "General Hospital Ilorin", status: "success", timestamp: "2024-11-23 14:23:35" },
     { id: 5, resource: "Condition", operation: "UPDATE", facility: "Private Clinic Offa", status: "warning", timestamp: "2024-11-23 14:23:30" },
 ];
+
+// --- Consent API Mock ---
+
+export interface ConsentRecord {
+  patientId: string;
+  scope: string;
+  grantedTo: string;
+  expiry: string;
+  status: "active" | "revoked";
+}
+
+let mockConsentRecords: ConsentRecord[] = [
+  { patientId: "KW2024001234", scope: "Full access", grantedTo: "Baptist Medical Centre", expiry: "2025-12-31", status: "active" },
+  { patientId: "KW2024001235", scope: "Lab results only", grantedTo: "Private Clinic Offa", expiry: "2025-06-30", status: "active" },
+  { patientId: "KW2024001236", scope: "Emergency access", grantedTo: "General Hospital", expiry: "Never", status: "revoked" },
+];
+
+export async function fetchConsentRecords(): Promise<ConsentRecord[]> {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return mockConsentRecords;
+}
+
+export async function revokeConsent(patientId: string): Promise<ConsentRecord> {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const recordIndex = mockConsentRecords.findIndex(r => r.patientId === patientId);
+  if (recordIndex === -1) {
+    throw new Error("Consent record not found");
+  }
+
+  if (mockConsentRecords[recordIndex].status === 'revoked') {
+    throw new Error("Consent already revoked");
+  }
+  
+  mockConsentRecords[recordIndex] = {
+    ...mockConsentRecords[recordIndex],
+    status: "revoked",
+  };
+  return mockConsentRecords[recordIndex];
+}
