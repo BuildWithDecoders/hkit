@@ -41,7 +41,6 @@ const MoH_MENU: MenuItem[] = [
   { title: "Governance", url: "/governance", icon: Shield },
   { title: "Audit Logs", url: "/audit", icon: ScrollText },
   { title: "System Health", url: "/health", icon: Activity },
-  { title: "Developer Portal", url: "/developer", icon: Code2 },
 ];
 
 const FACILITY_ADMIN_MENU: MenuItem[] = [
