@@ -16,13 +16,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+type FacilityStatus = "verified" | "pending" | "rejected";
+
 // Mock data for a detailed facility
 const mockFacilityDetails = {
   id: 1,
   name: "General Hospital Ilorin",
   lga: "Ilorin West",
   type: "Public",
-  status: "verified" as const,
+  status: "verified" as FacilityStatus,
   compliance: 92,
   administrators: 3,
   apiActivity: "2.3k req/day",
@@ -62,7 +64,7 @@ const FacilityDetails = () => {
     );
   }
 
-  const getStatusBadge = (status: typeof facility.status) => {
+  const getStatusBadge = (status: FacilityStatus) => {
     switch (status) {
       case "verified":
         return (
