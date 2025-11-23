@@ -8,6 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    --font-sans: "Lexend", sans-serif;
     --background: 220 15% 7%;
     --foreground: 0 0% 98%;
 
@@ -69,6 +70,6 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 }
