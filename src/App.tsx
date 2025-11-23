@@ -8,7 +8,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/layout/AppLayout";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
-import Register from "./pages/Register"; // Import Register
+import Register from "./pages/Register";
 import CommandCenter from "./pages/CommandCenter";
 import Facilities from "./pages/Facilities";
 import Interoperability from "./pages/Interoperability";
@@ -17,6 +17,8 @@ import Developer from "./pages/Developer";
 import Governance from "./pages/Governance";
 import Audit from "./pages/Audit";
 import SystemHealth from "./pages/SystemHealth";
+import FacilityDashboard from "./pages/FacilityDashboard";
+import DeveloperDashboard from "./pages/DeveloperDashboard";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 
@@ -32,7 +34,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} /> {/* Add Register Route */}
+            <Route path="/register" element={<Register />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
 
             {/* Protected Routes Group */}
@@ -50,9 +52,9 @@ const App = () => (
                 {/* Developer Routes */}
                 <Route path="/developer" element={<Developer />} /> 
                 
-                {/* Role-specific Dashboards (using existing pages as placeholders for now) */}
-                <Route path="/facility-dashboard" element={<CommandCenter />} /> 
-                <Route path="/developer-dashboard" element={<Developer />} /> 
+                {/* Role-specific Dashboards */}
+                <Route path="/facility-dashboard" element={<FacilityDashboard />} /> 
+                <Route path="/developer-dashboard" element={<DeveloperDashboard />} /> 
               </Route>
             </Route>
 

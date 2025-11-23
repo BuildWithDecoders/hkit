@@ -1,4 +1,4 @@
-import { Bell, User } from "lucide-react";
+import { Bell, User, LogOut } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,8 +10,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/use-auth";
 
 export function TopBar() {
+  const { user, role, logout } = useAuth();
+
+  const getRoleLabel = () => {
+    if (role === "MoH") return "MoH Administrator";
+    if (role === "FacilityAdmin") return user?.facility || "Facility Admin";
+    if (role === "Developer") return user?.name || "Developer";
+    return "Guest";
+  };
+
   return (
     <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between">
       <div className="flex items-center gap-4">
@@ -20,7 +30,7 @@ export function TopBar() {
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
             Production
           </Badge>
-          <span className="text-sm text-muted-foreground">Kwara State HIE</span>
+          <span className="text-sm text-muted-foreground">{getRoleLabel()}</span>
         </div>
       </div>
 
@@ -63,12 +73,15 @@ export function TopBar() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>MoH Administrator</DropdownMenuLabel>
+            <DropdownMenuLabel>{user?.name || "User Profile"}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Sign out</DropdownMenuItem>
+            <DropdownMenuItem onClick={logout}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
