@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export type FacilityStatus = "verified" | "pending" | "rejected";
 
@@ -14,89 +15,64 @@ export interface Facility {
   lastSync: string;
 }
 
-let facilities: Facility[] = [
-  {
-    id: 1,
-    name: "General Hospital Ilorin",
-    lga: "Ilorin West",
-    type: "Public",
-    status: "verified",
-    compliance: 92,
-    administrators: 3,
-    apiActivity: "2.3k req/day",
-    lastSync: "2 min ago",
-  },
-  {
-    id: 2,
-    name: "Baptist Medical Centre",
-    lga: "Ilorin South",
-    type: "Private",
-    status: "verified",
-    compliance: 88,
-    administrators: 2,
-    apiActivity: "1.8k req/day",
-    lastSync: "5 min ago",
-  },
-  {
-    id: 3,
-    name: "Sobi Specialist Hospital",
-    lga: "Ilorin East",
-    type: "Public",
-    status: "verified",
-    compliance: 95,
-    administrators: 4,
-    apiActivity: "3.1k req/day",
-    lastSync: "1 min ago",
-  },
-  {
-    id: 4,
-    name: "Private Clinic Offa",
-    lga: "Offa",
-    type: "Private",
-    status: "pending",
-    compliance: 0,
-    administrators: 0,
-    apiActivity: "N/A",
-    lastSync: "N/A",
-  },
-  {
-    id: 5,
-    name: "Community Health Centre",
-    lga: "Asa",
-    type: "Public",
-    status: "pending",
-    compliance: 0,
-    administrators: 0,
-    apiActivity: "N/A",
-    lastSync: "N/A",
-  },
-];
-
-// --- Mock API Functions ---
+// --- Supabase API Functions ---
 
 export async function fetchFacilities(): Promise<Facility[]> {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return facilities;
+  // Fetch all facilities (MoH policy allows authenticated users to read all)
+  const { data, error } = await supabase
+    .from('facilities')
+    .select('*');
+
+  if (error) {
+    console.error("Error fetching facilities:", error);
+    throw new Error("Failed to fetch facilities data.");
+  }
+  
+  // Map Supabase data structure to Facility interface
+  return data.map(f => ({
+    id: f.id,
+    name: f.name,
+    lga: f.lga || 'N/A',
+    type: f.type || 'N/A',
+    status: f.status as FacilityStatus,
+    compliance: f.compliance || 0,
+    administrators: f.administrators || 0,
+    // Keeping these fields mocked/placeholder until real data ingestion is implemented
+    apiActivity: f.api_activity || 'N/A',
+    lastSync: f.last_sync ? new Date(f.last_sync).toLocaleString() : 'N/A',
+  }));
 }
 
 export async function updateFacilityStatus(id: number, status: FacilityStatus): Promise<Facility> {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  const facilityIndex = facilities.findIndex(f => f.id === id);
-  if (facilityIndex === -1) {
-    throw new Error("Facility not found");
-  }
+  const { data, error } = await supabase
+    .from('facilities')
+    .update({ 
+      status,
+      // Mocking compliance/admins update for verified status, as per previous mock logic
+      compliance: status === 'verified' ? 70 : 0,
+      administrators: status === 'verified' ? 1 : 0,
+    })
+    .eq('id', id)
+    .select()
+    .single();
 
-  const updatedFacility = { 
-    ...facilities[facilityIndex], 
-    status,
-    compliance: status === 'verified' ? 70 : 0,
-    administrators: status === 'verified' ? 1 : 0,
-  };
+  if (error) {
+    console.error("Error updating facility status:", error);
+    throw new Error(`Failed to update facility status: ${error.message}`);
+  }
   
-  facilities[facilityIndex] = updatedFacility;
-  return updatedFacility;
+  // Map Supabase data structure back to Facility interface
+  return {
+    id: data.id,
+    name: data.name,
+    lga: data.lga || 'N/A',
+    type: data.type || 'N/A',
+    status: data.status as FacilityStatus,
+    compliance: data.compliance || 0,
+    administrators: data.administrators || 0,
+    apiActivity: data.api_activity || 'N/A',
+    lastSync: data.last_sync ? new Date(data.last_sync).toLocaleString() : 'N/A',
+  };
 }
 
 // Placeholder for other data types (Audit Logs, FHIR Events)
