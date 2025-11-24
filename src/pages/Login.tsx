@@ -2,28 +2,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { LogIn } from "lucide-react";
+import { LogIn, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState(""); // Mocked password state
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // If already authenticated, redirect to the appropriate dashboard
-  if (isAuthenticated) {
-    navigate("/dashboard", { replace: true });
-    return null;
+  // If already authenticated, the useAuth hook handles redirection.
+  // We only need to show a loading state here if the session is being checked.
+  if (isAuthenticated && !isLoading) {
+    // The AuthProvider handles the specific dashboard redirect based on role.
+    return null; 
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, we'd validate password too. Here, we only use username for mock role lookup.
-    login(username);
+    setIsSubmitting(true);
+    await login(email, password);
+    setIsSubmitting(false);
   };
+
+  const isBusy = isLoading || isSubmitting;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary/30 p-4">
@@ -42,14 +47,15 @@ const Login = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username (Try: moh, facility, or developer)</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                type="text"
-                placeholder="Enter username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                type="email"
+                placeholder="user@moh.kwara.ng"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isBusy}
                 className="bg-secondary border-border"
               />
             </div>
@@ -62,11 +68,16 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={isBusy}
                 className="bg-secondary border-border"
               />
             </div>
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-              <LogIn className="w-4 h-4 mr-2" />
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isBusy}>
+              {isBusy ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <LogIn className="w-4 h-4 mr-2" />
+              )}
               Sign In
             </Button>
           </form>
