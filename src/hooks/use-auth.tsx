@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User as SupabaseUser } from "@supabase/supabase-js";
@@ -97,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // 1. Initial Load and Auth State Listener
   useEffect(() => {
@@ -109,13 +110,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Redirect logic after sign-in
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-          if (profile?.role === "MoH") {
+          const currentPath = location.pathname;
+          // Only redirect if the user is on a public/unauthorized entry point
+          const isPublicPath = currentPath === '/' || currentPath === '/login' || currentPath === '/register' || currentPath === '/moh-setup' || currentPath === '/unauthorized';
+
+          if (profile?.role === "MoH" && isPublicPath) {
             navigate("/dashboard", { replace: true });
-          } else if (profile?.role === "FacilityAdmin") {
+          } else if (profile?.role === "FacilityAdmin" && isPublicPath) {
             navigate("/facility-dashboard", { replace: true });
-          } else if (profile?.role === "Developer") {
+          } else if (profile?.role === "Developer" && isPublicPath) {
             navigate("/developer-dashboard", { replace: true });
-          } else if (profile?.role === null && location.pathname !== '/register') {
+          } else if (profile?.role === null && currentPath !== '/register') {
             // User signed up but role/facility is pending approval/setup
             toast.info("Your account is pending setup or approval.");
             navigate("/unauthorized", { replace: true });
@@ -131,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   // 2. Login Function
   const login = async (email: string, password: string) => {
