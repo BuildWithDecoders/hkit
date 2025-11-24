@@ -7,6 +7,7 @@ import { Search, User, Shield, Clock, Check, X, Loader2, AlertTriangle, Plus } f
 import { useConsentRecords, useRevokeConsent } from "@/hooks/use-hkit-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 const mpiRecords = [
   { id: "KW2024001234", name: "Oluwaseun Adebayo", dob: "1985-03-15", gender: "Male", facility: "General Hospital", verified: true },
@@ -38,6 +39,26 @@ const Governance = () => {
 
   const handleRevoke = (patientId: string) => {
     revokeMutation.mutate(patientId);
+  };
+
+  const handleAdvancedSearch = () => {
+    toast.info("Action: Opening Advanced MPI Search Dialog (Mock Action)");
+  };
+
+  const handleViewFullRecord = (id: string) => {
+    toast.info(`Action: Viewing full MPI record for ID: ${id}`);
+  };
+
+  const handleViewConsentHistory = (patientId: string) => {
+    toast.info(`Action: Viewing consent history for patient ID: ${patientId}`);
+  };
+
+  const handleAddNewUser = () => {
+    toast.info("Action: Opening Add New User form (Mock Action)");
+  };
+
+  const handleEditUser = (userId: number) => {
+    toast.info(`Action: Editing user ID: ${userId} (Mock Action)`);
   };
 
   const renderConsentContent = () => {
@@ -120,7 +141,12 @@ const Governance = () => {
                     {revokeMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Revoke"}
                   </Button>
                 )}
-                <Button variant="outline" size="sm" className="border-border">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-border"
+                  onClick={() => handleViewConsentHistory(record.patientId)}
+                >
                   History
                 </Button>
               </div>
@@ -137,7 +163,7 @@ const Governance = () => {
         <Card className="p-6 border-border">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-foreground">Local User Management</h3>
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button className="bg-primary hover:bg-primary/90" onClick={handleAddNewUser}>
               <Plus className="w-4 h-4 mr-2" />
               Add New User
             </Button>
@@ -159,7 +185,12 @@ const Governance = () => {
                   >
                     {u.status}
                   </Badge>
-                  <Button variant="outline" size="sm" className="border-border">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-border"
+                    onClick={() => handleEditUser(u.id)}
+                  >
                     Edit
                   </Button>
                 </div>
@@ -207,7 +238,7 @@ const Governance = () => {
                 className="pl-10 bg-secondary border-border"
               />
             </div>
-            <Button variant="outline" className="border-border">
+            <Button variant="outline" className="border-border" onClick={handleAdvancedSearch}>
               Advanced Search
             </Button>
           </div>
@@ -255,7 +286,12 @@ const Governance = () => {
                       </div>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" className="border-border">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-border"
+                    onClick={() => handleViewFullRecord(record.id)}
+                  >
                     View Full Record
                   </Button>
                 </div>

@@ -8,6 +8,7 @@ import { useState, useMemo } from "react";
 import { useFacilities, useApproveFacility, useRejectFacility } from "@/hooks/use-hkit-data";
 import { Facility } from "@/api/hkit";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const Facilities = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -24,15 +25,27 @@ const Facilities = () => {
     rejectMutation.mutate(id);
   };
 
+  const handleAddNewFacility = () => {
+    toast.info("Action: Navigate to Facility Creation Form (Not Implemented)");
+  };
+
+  const handleFilterLGA = () => {
+    toast.info("Action: Open LGA Filter Dialog (Not Implemented)");
+  };
+
+  const handleExportList = () => {
+    toast.info("Action: Exporting Facility List (Mock Action)");
+  };
+
   const filteredFacilities = useMemo(() => {
     if (!facilities) return [];
     switch (activeTab) {
       case 'verified':
         return facilities.filter(f => f.status === 'verified');
       case 'pending':
-        return facilities.filter(f => f.status === 'pending');
       case 'rejected':
-        return facilities.filter(f => f.status === 'rejected');
+        // Ensure pending and rejected are shown for MoH to manage
+        return facilities.filter(f => f.status === activeTab);
       case 'all':
       default:
         return facilities;
@@ -89,7 +102,7 @@ const Facilities = () => {
           <h1 className="text-3xl font-bold text-foreground mb-2">Facility Registry</h1>
           <p className="text-muted-foreground">Manage facility onboarding and compliance</p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90">
+        <Button className="bg-primary hover:bg-primary/90" onClick={handleAddNewFacility}>
           Add New Facility
         </Button>
       </div>
@@ -102,10 +115,10 @@ const Facilities = () => {
             className="pl-10 bg-secondary border-border"
           />
         </div>
-        <Button variant="outline" className="border-border">
+        <Button variant="outline" className="border-border" onClick={handleFilterLGA}>
           Filter by LGA
         </Button>
-        <Button variant="outline" className="border-border">
+        <Button variant="outline" className="border-border" onClick={handleExportList}>
           Export List
         </Button>
       </div>

@@ -9,6 +9,7 @@ import { useState } from "react";
 import { MessageInspectorDialog } from "@/components/interoperability/MessageInspectorDialog";
 import { getMockMessageDetails, FhirEvent } from "@/api/hkit";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const validationIssues = [
   { id: 1, message: "Missing required field: patient.identifier", resource: "Patient", facility: "General Hospital", severity: "error" },
@@ -27,6 +28,14 @@ const Interoperability = () => {
       setSelectedMessage(details);
       setIsInspectorOpen(true);
     }
+  };
+
+  const handleViewValidationDetails = (issueId: number) => {
+    toast.info(`Action: Viewing detailed validation report for issue #${issueId}`);
+  };
+
+  const handleTransformValidate = () => {
+    toast.info("Action: Running HL7 transformation and validation (Mock Action)");
   };
 
   const renderEventStream = () => {
@@ -109,7 +118,7 @@ const Interoperability = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Successful</p>
-              <p className="text-2xl font-bold text-success mt-1">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "44,891"}</p>
+              <p className="text-2xl font-bold text-success">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "44,891"}</p>
             </div>
             <CheckCircle2 className="w-8 h-8 text-success" />
           </div>
@@ -118,7 +127,7 @@ const Interoperability = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Failed</p>
-              <p className="text-2xl font-bold text-destructive mt-1">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "127"}</p>
+              <p className="text-2xl font-bold text-destructive">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "127"}</p>
             </div>
             <XCircle className="w-8 h-8 text-destructive" />
           </div>
@@ -127,7 +136,7 @@ const Interoperability = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Warnings</p>
-              <p className="text-2xl font-bold text-warning mt-1">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "216"}</p>
+              <p className="text-2xl font-bold text-warning">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "216"}</p>
             </div>
             <AlertTriangle className="w-8 h-8 text-warning" />
           </div>
@@ -180,7 +189,12 @@ const Interoperability = () => {
                         <span className="text-xs text-muted-foreground">Facility: {issue.facility}</span>
                       </div>
                     </div>
-                    <Button size="sm" variant="outline" className="border-border">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="border-border"
+                      onClick={() => handleViewValidationDetails(issue.id)}
+                    >
                       View Details
                     </Button>
                   </div>
@@ -225,7 +239,7 @@ const Interoperability = () => {
               </div>
             </div>
             <div className="mt-4 flex justify-end">
-              <Button className="bg-primary hover:bg-primary/90">
+              <Button className="bg-primary hover:bg-primary/90" onClick={handleTransformValidate}>
                 Transform & Validate
               </Button>
             </div>

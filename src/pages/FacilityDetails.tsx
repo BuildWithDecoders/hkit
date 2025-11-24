@@ -111,6 +111,18 @@ const FacilityDetails = () => {
     });
   };
 
+  const handleViewAuditLogs = () => {
+    // In a real app, this would navigate to /audit?facilityId=1
+    toast.info(`Action: Navigating to Audit Logs filtered for ${facility.name}`);
+    navigate("/audit");
+  };
+
+  const handleViewDataQualityReport = () => {
+    // In a real app, this would navigate to /data-quality?facilityId=1
+    toast.info(`Action: Navigating to Data Quality Report for ${facility.name}`);
+    navigate("/data-quality");
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center gap-4">
@@ -246,15 +258,13 @@ const FacilityDetails = () => {
         {/* Compliance and Actions */}
         <Card className="p-6 border-border">
           <h3 className="text-xl font-semibold text-foreground mb-4">Compliance & Governance</h3>
-          <div className="flex justify-between items-center">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">View detailed audit logs and data quality reports for this facility.</p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline" className="border-border">
+          <div className="flex flex-col gap-3">
+            <p className="text-sm text-muted-foreground">View detailed audit logs and data quality reports for this facility.</p>
+            <div className="flex flex-col gap-2">
+              <Button variant="outline" className="border-border" onClick={handleViewAuditLogs}>
                 View Audit Logs
               </Button>
-              <Button variant="outline" className="border-border">
+              <Button variant="outline" className="border-border" onClick={handleViewDataQualityReport}>
                 View Data Quality Report
               </Button>
             </div>

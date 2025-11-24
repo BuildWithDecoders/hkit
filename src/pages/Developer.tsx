@@ -50,6 +50,30 @@ const Developer = () => {
     toast.success("Copied to clipboard");
   };
 
+  const handleGenerateKey = () => {
+    toast.info("Action: Generating new API key (Mock Action)");
+  };
+
+  const handleRevokeKey = (keyId: number) => {
+    toast.warning(`Action: Revoking API key #${keyId} (Mock Action)`);
+  };
+
+  const handleAddWebhook = () => {
+    toast.info("Action: Opening Add Webhook form (Mock Action)");
+  };
+
+  const handleEditWebhook = (webhookId: number) => {
+    toast.info(`Action: Editing Webhook #${webhookId} (Mock Action)`);
+  };
+
+  const handleDeleteWebhook = (webhookId: number) => {
+    toast.warning(`Action: Deleting Webhook #${webhookId} (Mock Action)`);
+  };
+
+  const handleViewDocs = (title: string) => {
+    toast.info(`Action: Navigating to Documentation: ${title}`);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -68,7 +92,7 @@ const Developer = () => {
         <TabsContent value="keys" className="space-y-4 mt-6">
           <div className="flex justify-between items-center">
             <p className="text-sm text-muted-foreground">Manage your API authentication keys</p>
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button className="bg-primary hover:bg-primary/90" onClick={handleGenerateKey}>
               <Plus className="w-4 h-4 mr-2" />
               Generate New Key
             </Button>
@@ -101,7 +125,12 @@ const Developer = () => {
                       <span className="text-muted-foreground">Last used: {key.lastUsed}</span>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" className="border-border ml-4">
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    className="border-destructive/50 ml-4"
+                    onClick={() => handleRevokeKey(key.id)}
+                  >
                     Revoke
                   </Button>
                 </div>
@@ -112,17 +141,26 @@ const Developer = () => {
 
         <TabsContent value="docs" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card className="p-6 border-border hover:border-primary/50 transition-colors cursor-pointer">
+            <Card 
+              className="p-6 border-border hover:border-primary/50 transition-colors cursor-pointer"
+              onClick={() => handleViewDocs("Getting Started")}
+            >
               <Book className="w-8 h-8 text-primary mb-3" />
               <h3 className="font-semibold text-foreground mb-2">Getting Started</h3>
               <p className="text-sm text-muted-foreground">Learn the basics of Hkit API integration</p>
             </Card>
-            <Card className="p-6 border-border hover:border-primary/50 transition-colors cursor-pointer">
+            <Card 
+              className="p-6 border-border hover:border-primary/50 transition-colors cursor-pointer"
+              onClick={() => handleViewDocs("FHIR Resources")}
+            >
               <Code2 className="w-8 h-8 text-primary mb-3" />
               <h3 className="font-semibold text-foreground mb-2">FHIR Resources</h3>
               <p className="text-sm text-muted-foreground">Complete FHIR R4 resource documentation</p>
             </Card>
-            <Card className="p-6 border-border hover:border-primary/50 transition-colors cursor-pointer">
+            <Card 
+              className="p-6 border-border hover:border-primary/50 transition-colors cursor-pointer"
+              onClick={() => handleViewDocs("Webhooks Guide")}
+            >
               <Webhook className="w-8 h-8 text-primary mb-3" />
               <h3 className="font-semibold text-foreground mb-2">Webhooks Guide</h3>
               <p className="text-sm text-muted-foreground">Real-time event subscriptions</p>
@@ -157,7 +195,7 @@ const Developer = () => {
         <TabsContent value="webhooks" className="space-y-4 mt-6">
           <div className="flex justify-between items-center">
             <p className="text-sm text-muted-foreground">Subscribe to real-time FHIR events</p>
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button className="bg-primary hover:bg-primary/90" onClick={handleAddWebhook}>
               <Plus className="w-4 h-4 mr-2" />
               Add Webhook
             </Button>
@@ -184,10 +222,20 @@ const Developer = () => {
                     </div>
                   </div>
                   <div className="flex gap-2 ml-4">
-                    <Button variant="outline" size="sm" className="border-border">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="border-border"
+                      onClick={() => handleEditWebhook(webhook.id)}
+                    >
                       Edit
                     </Button>
-                    <Button variant="outline" size="sm" className="border-border">
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="border-destructive/50"
+                      onClick={() => handleDeleteWebhook(webhook.id)}
+                    >
                       Delete
                     </Button>
                   </div>
