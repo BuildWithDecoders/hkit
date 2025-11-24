@@ -51,7 +51,8 @@ async function fetchUserProfile(supabaseUser: SupabaseUser): Promise<UserProfile
     
     if (attempts < maxAttempts - 1) {
       // Wait a bit before retrying if profile is missing or role is null
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Reduced delay from 500ms to 50ms for faster perceived load time
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
     attempts++;
   }
