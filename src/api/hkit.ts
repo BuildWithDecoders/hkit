@@ -223,86 +223,38 @@ export async function createApprovedUser({
   role: 'FacilityAdmin' | 'Developer';
 }): Promise<void> {
   
-  // 1. Create the user in Supabase Auth
-  const [firstName, ...lastNameParts] = name.split(' ');
-  const lastName = lastNameParts.join(' ');
-
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true, // Automatically confirm the email since MoH is creating it
-    user_metadata: {
-      first_name: firstName,
-      last_name: lastName,
-    },
-  });
-
-  if (authError) {
-    throw new Error(`Auth user creation failed: ${authError.message}`);
-  }
-
-  const userId = authData.user.id;
-  let facilityId: number | undefined;
-
-  // 2. Handle Facility-specific logic: Create facility record and get its ID
-  if (requestType === 'facility') {
-    const { data: facilityData, error: facilityInsertError } = await supabase
-      .from('facilities')
-      .insert({
-        name: requestData.facilityName,
-        lga: requestData.lga,
-        type: requestData.facilityType,
-        status: 'verified', // Mark as verified since the admin user is being created
-        administrators: 1,
-        compliance: 0,
-        api_activity: 'None',
-        last_sync: null,
-      })
-      .select('id')
-      .single();
-
-    if (facilityInsertError) {
-      console.error("Error inserting new facility:", facilityInsertError);
-      // IMPORTANT: If facility creation fails, we should ideally delete the auth user created in step 1.
-      // For simplicity here, we throw and rely on manual cleanup if this happens.
-      throw new Error("Failed to create new facility record.");
-    }
-    facilityId = facilityData.id;
-  }
-  
-  // 3. Update the user's profile with the correct role and facility ID
-  // Note: The handle_new_user trigger already created a basic profile, so we UPDATE.
-  const { error: profileUpdateError } = await supabase
-    .from('profiles')
-    .update({ 
-      role: role, 
-      facility_id: facilityId || null,
-      first_name: firstName,
-      last_name: lastName,
-    })
-    .eq('id', userId);
-
-  if (profileUpdateError) {
-    console.error("Failed to set role/facility ID:", profileUpdateError);
-    throw new Error("User created, but failed to assign role/facility ID.");
-  }
-
-  // 4. Mark the registration request as approved
   const { data: sessionData } = await supabase.auth.getSession();
   const mohUserId = sessionData.session?.user.id;
 
-  const { error: updateRequestError } = await supabase
-    .from('registration_requests')
-    .update({ status: 'approved', approved_by: mohUserId })
-    .eq('id', requestId);
+  if (!mohUserId) {
+    throw new Error("User must be authenticated to approve requests.");
+  }
 
-  if (updateRequestError) {
-    console.error("Error updating request status:", updateRequestError);
-    throw new Error("Failed to mark request as approved.");
+  // 1. Invoke the Edge Function for secure administrative actions
+  const { data, error } = await supabase.functions.invoke('approve-request', {
+    body: JSON.stringify({
+      requestId,
+      requestType,
+      requestData,
+      email,
+      password,
+      name,
+      role,
+      mohUserId,
+    }),
+  });
+
+  if (error) {
+    console.error("Edge Function invocation failed:", error);
+    throw new Error(`Approval failed: ${error.message}`);
   }
   
-  // 5. Simulate sending the welcome email with the temporary password
-  // NOTE: In a production environment, this would involve an Edge Function calling a third-party email service (e.g., Resend, SendGrid)
+  if (data && data.error) {
+    console.error("Edge Function returned error:", data.error);
+    throw new Error(`Approval failed: ${data.error}`);
+  }
+
+  // 2. Simulate sending the welcome email with the temporary password
   console.log(`[EMAIL SIMULATION] Sent welcome email to ${email} with temporary password: ${password}`);
   toast.info(`Email simulation: Sent temporary password to ${email}.`, {
     description: `Password: ${password}`,
