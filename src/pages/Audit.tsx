@@ -6,9 +6,23 @@ import { Search, Download, Filter, Loader2, AlertTriangle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuditLogs } from "@/hooks/use-hkit-data";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/use-auth";
 
 const Audit = () => {
   const { data: auditLogs, isLoading, isError } = useAuditLogs();
+  const { role, user } = useAuth();
+
+  const getTitle = () => {
+    if (role === "FacilityAdmin") return `${user?.facility || 'Facility'} Audit Logs`;
+    if (role === "Developer") return `${user?.name || 'Developer'} API Logs`;
+    return "Audit Logs";
+  };
+
+  const getDescription = () => {
+    if (role === "FacilityAdmin") return "Activity log for your facility's integration and user actions.";
+    if (role === "Developer") return "Detailed log of API calls and key management actions.";
+    return "Complete system activity and accountability trail";
+  };
 
   const renderAuditList = () => {
     if (isLoading) {
@@ -75,8 +89,8 @@ const Audit = () => {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Audit Logs</h1>
-        <p className="text-muted-foreground">Complete system activity and accountability trail</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">{getTitle()}</h1>
+        <p className="text-muted-foreground">{getDescription()}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

@@ -1,13 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Database } from "lucide-react";
-
-const heatmapData = [
-  { facility: "GH Ilorin", Patient: 98, Encounter: 95, Observation: 92, Medication: 90 },
-  { facility: "Baptist Medical", Patient: 95, Encounter: 90, Observation: 88, Medication: 85 },
-  { facility: "Sobi Hospital", Patient: 85, Encounter: 88, Observation: 91, Medication: 82 },
-  { facility: "Private Clinic", Patient: 75, Encounter: 70, Observation: 78, Medication: 65 },
-];
+import { mockHeatmapData } from "@/api/hkit";
 
 const resources = ["Patient", "Encounter", "Observation", "Medication"];
 
@@ -39,7 +33,7 @@ export function DataQualityHeatmap() {
               </tr>
             </thead>
             <tbody>
-              {heatmapData.map((row, index) => (
+              {mockHeatmapData.map((row, index) => (
                 <tr key={index} className="border-b border-border/50 last:border-b-0 hover:bg-secondary/50 transition-colors">
                   <td className="py-3 px-2 font-medium text-foreground text-sm">{row.facility}</td>
                   {resources.map((res) => {

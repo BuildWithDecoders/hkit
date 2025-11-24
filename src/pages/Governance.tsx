@@ -3,9 +3,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, User, Shield, Clock, Check, X, Loader2, AlertTriangle } from "lucide-react";
+import { Search, User, Shield, Clock, Check, X, Loader2, AlertTriangle, Plus } from "lucide-react";
 import { useConsentRecords, useRevokeConsent } from "@/hooks/use-hkit-data";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/use-auth";
 
 const mpiRecords = [
   { id: "KW2024001234", name: "Oluwaseun Adebayo", dob: "1985-03-15", gender: "Male", facility: "General Hospital", verified: true },
@@ -13,9 +14,27 @@ const mpiRecords = [
   { id: "KW2024001236", name: "Chukwudi Okafor", dob: "1978-11-10", gender: "Male", facility: "Sobi Hospital", verified: false },
 ];
 
+// Mock data for Facility Admin User Management
+const facilityUsers = [
+  { id: 1, name: "Dr. Jane Doe", role: "Clinician", email: "jane.doe@ghilorin.com", status: "Active" },
+  { id: 2, name: "Mr. John Smith", role: "Data Entry", email: "john.smith@ghilorin.com", status: "Active" },
+  { id: 3, name: "Ms. Alice Brown", role: "Admin Assistant", email: "alice.brown@ghilorin.com", status: "Inactive" },
+];
+
 const Governance = () => {
   const { data: consentRecords, isLoading: isLoadingConsent, isError: isErrorConsent } = useConsentRecords();
   const revokeMutation = useRevokeConsent();
+  const { role, user } = useAuth();
+
+  const getTitle = () => {
+    if (role === "FacilityAdmin") return `${user?.facility || 'Facility'} User & Consent Management`;
+    return "Consent & Identity Governance";
+  };
+
+  const getDescription = () => {
+    if (role === "FacilityAdmin") return "Manage local user access and patient consent records for your facility.";
+    return "Manage patient identities and data-sharing permissions";
+  };
 
   const handleRevoke = (patientId: string) => {
     revokeMutation.mutate(patientId);
@@ -112,18 +131,71 @@ const Governance = () => {
     );
   };
 
+  const renderClinicianDirectory = () => {
+    if (role === "FacilityAdmin") {
+      return (
+        <Card className="p-6 border-border">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-foreground">Local User Management</h3>
+            <Button className="bg-primary hover:bg-primary/90">
+              <Plus className="w-4 h-4 mr-2" />
+              Add New User
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {facilityUsers.map((u) => (
+              <div key={u.id} className="flex items-center justify-between p-4 rounded-lg bg-secondary border border-border">
+                <div className="flex items-center gap-4">
+                  <User className="w-5 h-5 text-primary" />
+                  <div>
+                    <p className="font-medium text-foreground">{u.name}</p>
+                    <p className="text-sm text-muted-foreground">{u.role} • {u.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge 
+                    variant="outline" 
+                    className={u.status === "Active" ? "bg-success/10 text-success border-success/20" : "bg-destructive/10 text-destructive border-destructive/20"}
+                  >
+                    {u.status}
+                  </Badge>
+                  <Button variant="outline" size="sm" className="border-border">
+                    Edit
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      );
+    }
+
+    // MoH view (original placeholder)
+    return (
+      <Card className="p-8 border-border text-center">
+        <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <h3 className="font-semibold text-foreground mb-2">Clinician Directory</h3>
+        <p className="text-sm text-muted-foreground">
+          Manage healthcare provider identities and access permissions
+        </p>
+      </Card>
+    );
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Consent & Identity Governance</h1>
-        <p className="text-muted-foreground">Manage patient identities and data-sharing permissions</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">{getTitle()}</h1>
+        <p className="text-muted-foreground">{getDescription()}</p>
       </div>
 
       <Tabs defaultValue="mpi" className="w-full">
         <TabsList className="bg-secondary">
           <TabsTrigger value="mpi">Master Patient Index</TabsTrigger>
           <TabsTrigger value="consent">Consent Registry</TabsTrigger>
-          <TabsTrigger value="clinicians">Clinician Directory</TabsTrigger>
+          <TabsTrigger value="clinicians">
+            {role === "FacilityAdmin" ? "User Management" : "Clinician Directory"}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="mpi" className="space-y-4 mt-6">
@@ -207,13 +279,7 @@ const Governance = () => {
         </TabsContent>
 
         <TabsContent value="clinicians" className="mt-6">
-          <Card className="p-8 border-border text-center">
-            <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="font-semibold text-foreground mb-2">Clinician Directory</h3>
-            <p className="text-sm text-muted-foreground">
-              Manage healthcare provider identities and access permissions
-            </p>
-          </Card>
+          {renderClinicianDirectory()}
         </TabsContent>
       </Tabs>
     </div>

@@ -110,7 +110,7 @@ export interface AuditLog {
   status: "success" | "failed";
 }
 
-export async function fetchAuditLogs(): Promise<AuditLog[]> {
+export async function fetchAuditLogs(role: string, facilityName?: string): Promise<AuditLog[]> {
     // Mock data from src/pages/Audit.tsx
     const mockLogs: AuditLog[] = [
         { id: 1, timestamp: "2024-11-23 14:25:30", user: "admin@moh.kwara", action: "FACILITY_APPROVED", resource: "Baptist Medical Centre", ip: "102.89.23.45", status: "success" },
@@ -119,9 +119,28 @@ export async function fetchAuditLogs(): Promise<AuditLog[]> {
         { id: 4, timestamp: "2024-11-23 14:18:08", user: "api_key_test456", action: "OBSERVATION_UPDATE", resource: "Observation/obs-12345", ip: "105.112.45.22", status: "failed" },
         { id: 5, timestamp: "2024-11-23 14:15:33", user: "admin@moh.kwara", action: "CONSENT_REVOKED", resource: "Consent/consent-789", ip: "102.89.23.45", status: "success" },
         { id: 6, timestamp: "2024-11-23 14:12:51", user: "api_key_prod999", action: "ENCOUNTER_CREATED", resource: "Encounter/enc-54321", ip: "197.255.88.99", status: "success" },
+        // Facility-specific logs for filtering simulation (assuming GH Ilorin is the mock facility)
+        { id: 7, timestamp: "2024-11-23 14:10:00", user: "facility_admin@ghilorin", action: "LOGIN", resource: "General Hospital Ilorin", ip: "192.168.1.1", status: "success" },
+        { id: 8, timestamp: "2024-11-23 14:05:00", user: "api_key_abc123", action: "PATIENT_CREATED", resource: "General Hospital Ilorin", ip: "41.203.12.88", status: "success" },
     ];
+    
     await new Promise(resolve => setTimeout(resolve, 500));
-    return mockLogs;
+
+    if (role === "FacilityAdmin" && facilityName) {
+        // Filter logs relevant to the facility (either resource or user related)
+        return mockLogs.filter(log => 
+            log.resource.includes(facilityName) || 
+            log.user.includes(facilityName.toLowerCase().replace(/\s/g, '')) ||
+            log.user.includes("facility_admin@ghilorin") // Specific mock user for GH Ilorin
+        );
+    }
+    
+    if (role === "Developer") {
+        // Filter logs relevant to API keys/integration actions
+        return mockLogs.filter(log => log.user.startsWith("api_key_") || log.action.includes("API_KEY"));
+    }
+
+    return mockLogs; // MoH sees all logs
 }
 
 export interface FhirEvent {
@@ -198,12 +217,18 @@ export interface ConsentRecord {
 let mockConsentRecords: ConsentRecord[] = [
   { patientId: "KW2024001234", scope: "Full access", grantedTo: "Baptist Medical Centre", expiry: "2025-12-31", status: "active" },
   { patientId: "KW2024001235", scope: "Lab results only", grantedTo: "Private Clinic Offa", expiry: "2025-06-30", status: "active" },
-  { patientId: "KW2024001236", scope: "Emergency access", grantedTo: "General Hospital", expiry: "Never", status: "revoked" },
+  { patientId: "KW2024001236", scope: "Emergency access", grantedTo: "General Hospital Ilorin", expiry: "Never", status: "revoked" },
 ];
 
-export async function fetchConsentRecords(): Promise<ConsentRecord[]> {
+export async function fetchConsentRecords(role: string, facilityName?: string): Promise<ConsentRecord[]> {
   await new Promise(resolve => setTimeout(resolve, 500));
-  return mockConsentRecords;
+  
+  if (role === "FacilityAdmin" && facilityName) {
+    // Facility Admin only sees consents granted to their facility
+    return mockConsentRecords.filter(r => r.grantedTo.includes(facilityName));
+  }
+
+  return mockConsentRecords; // MoH sees all consents
 }
 
 export async function revokeConsent(patientId: string): Promise<ConsentRecord> {
@@ -224,3 +249,36 @@ export async function revokeConsent(patientId: string): Promise<ConsentRecord> {
   };
   return mockConsentRecords[recordIndex];
 }
+
+// --- Data Quality Mock ---
+
+export interface FacilityScore {
+  name: string;
+  score: number;
+  trend: "up" | "down" | "neutral";
+  change: string;
+}
+
+export const mockFacilityScores: FacilityScore[] = [
+  { name: "General Hospital Ilorin", score: 95, trend: "up", change: "+3%" },
+  { name: "Baptist Medical Centre", score: 92, trend: "up", change: "+1%" },
+  { name: "Sobi Specialist Hospital", score: 88, trend: "down", change: "-2%" },
+  { name: "Private Clinic Offa", score: 85, trend: "up", change: "+5%" },
+  { name: "Community Health Centre", score: 78, trend: "down", change: "-4%" },
+  { name: "Maternity Hospital", score: 72, trend: "up", change: "+2%" },
+];
+
+export interface HeatmapRow {
+  facility: string;
+  Patient: number;
+  Encounter: number;
+  Observation: number;
+  Medication: number;
+}
+
+export const mockHeatmapData: HeatmapRow[] = [
+  { facility: "GH Ilorin", Patient: 98, Encounter: 95, Observation: 92, Medication: 90 },
+  { facility: "Baptist Medical", Patient: 95, Encounter: 90, Observation: 88, Medication: 85 },
+  { facility: "Sobi Hospital", Patient: 85, Encounter: 88, Observation: 91, Medication: 82 },
+  { facility: "Private Clinic", Patient: 75, Encounter: 70, Observation: 78, Medication: 65 },
+];

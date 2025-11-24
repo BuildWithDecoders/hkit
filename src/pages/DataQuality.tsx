@@ -4,23 +4,45 @@ import { Download, TrendingUp, TrendingDown } from "lucide-react";
 import { CompletenessTrendChart } from "@/components/data-quality/CompletenessTrendChart";
 import { ErrorDistributionChart } from "@/components/data-quality/ErrorDistributionChart";
 import { DataQualityHeatmap } from "@/components/data-quality/DataQualityHeatmap";
-
-const facilityScores = [
-  { name: "General Hospital Ilorin", score: 95, trend: "up", change: "+3%" },
-  { name: "Baptist Medical Centre", score: 92, trend: "up", change: "+1%" },
-  { name: "Sobi Specialist Hospital", score: 88, trend: "down", change: "-2%" },
-  { name: "Private Clinic Offa", score: 85, trend: "up", change: "+5%" },
-  { name: "Community Health Centre", score: 78, trend: "down", change: "-4%" },
-  { name: "Maternity Hospital", score: 72, trend: "up", change: "+2%" },
-];
+import { useAuth } from "@/hooks/use-auth";
+import { mockFacilityScores } from "@/api/hkit";
 
 const DataQuality = () => {
+  const { role, user } = useAuth();
+  const facilityName = user?.facility;
+
+  const getTitle = () => {
+    if (role === "FacilityAdmin") return `${facilityName || 'Your Facility'} Data Quality Score`;
+    return "Data Quality Center";
+  };
+
+  const getDescription = () => {
+    if (role === "FacilityAdmin") return "Monitor your facility's compliance with the Minimum Dataset Standard.";
+    return "Monitor and enforce minimum dataset compliance";
+  };
+
+  const filteredFacilityScores = role === "FacilityAdmin"
+    ? mockFacilityScores.filter(f => f.name === facilityName)
+    : mockFacilityScores;
+
+  const overallCompleteness = role === "FacilityAdmin"
+    ? filteredFacilityScores[0]?.score || 0
+    : 87.3; // MoH average
+
+  const facilitiesMeetingMDS = role === "FacilityAdmin"
+    ? (overallCompleteness >= 80 ? "1/1" : "0/1")
+    : "94/118";
+
+  const complianceRate = role === "FacilityAdmin"
+    ? (overallCompleteness >= 80 ? "100%" : "0%")
+    : "79.7% compliance rate";
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Data Quality Center</h1>
-          <p className="text-muted-foreground">Monitor and enforce minimum dataset compliance</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{getTitle()}</h1>
+          <p className="text-muted-foreground">{getDescription()}</p>
         </div>
         <Button className="bg-primary hover:bg-primary/90">
           <Download className="w-4 h-4 mr-2" />
@@ -31,29 +53,32 @@ const DataQuality = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-6 border-border">
           <p className="text-sm text-muted-foreground mb-2">Overall Completeness</p>
-          <p className="text-3xl font-bold text-foreground mb-4">87.3%</p>
+          <p className="text-3xl font-bold text-foreground mb-4">{overallCompleteness}%</p>
           <div className="h-2 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-primary rounded-full" style={{ width: "87.3%" }} />
+            <div className="h-full bg-primary rounded-full" style={{ width: `${overallCompleteness}%` }} />
           </div>
         </Card>
         <Card className="p-6 border-border">
           <p className="text-sm text-muted-foreground mb-2">Validation Errors (24h)</p>
-          <p className="text-3xl font-bold text-destructive mb-2">342</p>
+          <p className="text-3xl font-bold text-destructive mb-2">{role === "FacilityAdmin" ? "12" : "342"}</p>
           <p className="text-sm text-muted-foreground">-15% from yesterday</p>
         </Card>
         <Card className="p-6 border-border">
           <p className="text-sm text-muted-foreground mb-2">Facilities Meeting MDS</p>
-          <p className="text-3xl font-bold text-success mb-2">94/118</p>
-          <p className="text-sm text-muted-foreground">79.7% compliance rate</p>
+          <p className="text-3xl font-bold text-success mb-2">{facilitiesMeetingMDS}</p>
+          <p className="text-sm text-muted-foreground">{complianceRate}</p>
         </Card>
       </div>
 
-      <DataQualityHeatmap />
+      {/* Heatmap is only relevant for MoH, so we hide it for Facility Admin */}
+      {role === "MoH" && <DataQualityHeatmap />}
 
       <Card className="p-6 border-border">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Facility Completeness Scores</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4">
+          {role === "FacilityAdmin" ? "Your Facility Score" : "Facility Completeness Scores"}
+        </h3>
         <div className="space-y-4">
-          {facilityScores.map((facility, index) => (
+          {filteredFacilityScores.map((facility, index) => (
             <div key={index} className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

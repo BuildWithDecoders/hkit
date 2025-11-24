@@ -13,6 +13,7 @@ import {
   ConsentRecord
 } from "@/api/hkit";
 import { toast } from "sonner";
+import { useAuth } from "./use-auth";
 
 // --- Facility Hooks ---
 
@@ -62,9 +63,12 @@ export function useRejectFacility() {
 // --- Audit & Interoperability Hooks ---
 
 export function useAuditLogs() {
+    const { role, user } = useAuth();
+    const facilityName = user?.facility;
+    
     return useQuery<AuditLog[]>({
-        queryKey: ["auditLogs"],
-        queryFn: fetchAuditLogs,
+        queryKey: ["auditLogs", role, facilityName],
+        queryFn: () => fetchAuditLogs(role || "Guest", facilityName),
     });
 }
 
@@ -78,9 +82,12 @@ export function useFhirEvents() {
 // --- Governance Hooks ---
 
 export function useConsentRecords() {
+    const { role, user } = useAuth();
+    const facilityName = user?.facility;
+
     return useQuery<ConsentRecord[]>({
-        queryKey: ["consentRecords"],
-        queryFn: fetchConsentRecords,
+        queryKey: ["consentRecords", role, facilityName],
+        queryFn: () => fetchConsentRecords(role || "Guest", facilityName),
     });
 }
 
