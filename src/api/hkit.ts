@@ -300,6 +300,14 @@ export async function createApprovedUser({
     console.error("Error updating request status:", updateRequestError);
     throw new Error("Failed to mark request as approved.");
   }
+  
+  // 5. Simulate sending the welcome email with the temporary password
+  // NOTE: In a production environment, this would involve an Edge Function calling a third-party email service (e.g., Resend, SendGrid)
+  console.log(`[EMAIL SIMULATION] Sent welcome email to ${email} with temporary password: ${password}`);
+  toast.info(`Email simulation: Sent temporary password to ${email}.`, {
+    description: `Password: ${password}`,
+    duration: 10000,
+  });
 }
 
 

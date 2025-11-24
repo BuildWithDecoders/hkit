@@ -2,10 +2,8 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Loader2, UserPlus } from "lucide-react";
 import {
   Dialog,
@@ -25,9 +23,9 @@ import {
 import { RegistrationRequest } from "@/api/hkit";
 import { useCreateApprovedUser } from "@/hooks/use-hkit-data";
 
+// Only email is required now, as password is auto-generated
 const userCreationSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type UserCreationFormValues = z.infer<typeof userCreationSchema>;
@@ -45,7 +43,6 @@ export function UserCreationDialog({ isOpen, onOpenChange, request }: UserCreati
     resolver: zodResolver(userCreationSchema),
     defaultValues: {
       email: request?.type === 'facility' ? request.data.contactEmail : request?.data.technicalContactEmail,
-      password: "",
     },
   });
 
@@ -53,7 +50,6 @@ export function UserCreationDialog({ isOpen, onOpenChange, request }: UserCreati
     if (request) {
       form.reset({
         email: request.type === 'facility' ? request.data.contactEmail : request.data.technicalContactEmail,
-        password: "",
       });
     }
   }, [request, form]);
@@ -69,21 +65,14 @@ export function UserCreationDialog({ isOpen, onOpenChange, request }: UserCreati
       requestType: request.type,
       requestData: request.data,
       email: data.email,
-      password: data.password,
       name: name,
       role: role,
     }, {
       onSuccess: () => {
+        // Password display handled by the mutation hook's onSuccess
         onOpenChange(false);
-        toast.success(`User account created for ${role}!`, {
-          description: `The user can now log in with the provided temporary password.`,
-        });
       },
-      onError: (error) => {
-        toast.error("User Creation Failed", {
-          description: error.message,
-        });
-      }
+      // Error handling is also handled by the mutation hook
     });
   };
 
@@ -99,7 +88,7 @@ export function UserCreationDialog({ isOpen, onOpenChange, request }: UserCreati
             Create {roleLabel} Account
           </DialogTitle>
           <DialogDescription>
-            Create the primary user account and set a temporary password for the approved {roleLabel}.
+            The system will auto-generate a temporary password and send it to the user's email.
           </DialogDescription>
         </DialogHeader>
         
@@ -113,19 +102,6 @@ export function UserCreationDialog({ isOpen, onOpenChange, request }: UserCreati
                   <FormLabel>User Email</FormLabel>
                   <FormControl>
                     <Input {...field} className="bg-secondary border-border" disabled={isSubmitting} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Temporary Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="Set temporary password (min 6 chars)" {...field} className="bg-secondary border-border" disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

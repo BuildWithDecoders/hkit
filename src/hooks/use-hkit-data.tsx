@@ -8,7 +8,7 @@ import {
   revokeConsent,
   fetchRegistrationRequests,
   rejectRegistrationRequest,
-  createApprovedUser, // New import
+  createApprovedUser,
   Facility,
   FacilityStatus,
   AuditLog,
@@ -18,6 +18,7 @@ import {
 } from "@/api/hkit";
 import { toast } from "sonner";
 import { useAuth } from "./use-auth";
+import { generateRandomPassword } from "@/lib/utils"; // Import password generator
 
 // --- Facility Hooks ---
 
@@ -75,26 +76,6 @@ export function useRegistrationRequests() {
   });
 }
 
-// This hook is now deprecated/removed as the logic moves to useCreateApprovedUser
-// export function useApproveRequest() {
-//   const queryClient = useQueryClient();
-//   return useMutation<void, Error, { id: string, type: 'facility' | 'developer', data: any }>({
-//     mutationFn: ({ id, type, data }) => approveRegistrationRequest(id, type, data),
-//     onSuccess: (_, variables) => {
-//       queryClient.invalidateQueries({ queryKey: ["registrationRequests"] });
-//       queryClient.invalidateQueries({ queryKey: ["facilities"] });
-//       toast.success(`${variables.type === 'facility' ? 'Facility' : 'Developer'} request approved!`, {
-//         description: "A new record has been created.",
-//       });
-//     },
-//     onError: (error) => {
-//       toast.error("Approval Failed", {
-//         description: error.message,
-//       });
-//     },
-//   });
-// }
-
 export function useRejectRequest() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, string>({
@@ -113,21 +94,40 @@ export function useRejectRequest() {
   });
 }
 
+interface CreateUserParams {
+    requestId: string; 
+    requestType: 'facility' | 'developer'; 
+    requestData: any; 
+    email: string; 
+    name: string; 
+    role: 'FacilityAdmin' | 'Developer';
+}
+
 export function useCreateApprovedUser() {
   const queryClient = useQueryClient();
-  return useMutation<void, Error, { 
-    requestId: string, 
-    requestType: 'facility' | 'developer', 
-    requestData: any, 
-    email: string, 
-    password: string, 
-    name: string, 
-    role: 'FacilityAdmin' | 'Developer' 
-  }>({
-    mutationFn: createApprovedUser,
-    onSuccess: () => {
+  
+  return useMutation<string, Error, CreateUserParams>({
+    mutationFn: async (params) => {
+        const password = generateRandomPassword(12); // Generate password here
+        
+        await createApprovedUser({
+            ...params,
+            password: password,
+        });
+        
+        return password; // Return the generated password
+    },
+    onSuccess: (generatedPassword, variables) => {
       queryClient.invalidateQueries({ queryKey: ["registrationRequests"] });
       queryClient.invalidateQueries({ queryKey: ["facilities"] });
+      
+      const roleLabel = variables.requestType === 'facility' ? 'Facility Administrator' : 'Developer';
+      
+      // Display the password to the MoH admin
+      toast.success(`User account created for ${roleLabel}!`, {
+        description: `Temporary Password: ${generatedPassword}. An email has been simulated to ${variables.email}.`,
+        duration: 15000,
+      });
     },
     onError: (error) => {
       toast.error("User Creation Failed", {
