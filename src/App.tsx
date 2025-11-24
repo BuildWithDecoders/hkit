@@ -24,7 +24,7 @@ import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 import MoHSignup from "./pages/MoHSignup";
-import RegistrationRequests from "./pages/RegistrationRequests"; // Import new page
+import RegistrationRequests from "./pages/RegistrationRequests";
 
 const queryClient = new QueryClient();
 
@@ -54,35 +54,40 @@ const App = () => (
               <Route element={<AppLayout />}>
                 
                 {/* MoH Routes (Full Access) */}
-                <Route element={<ProtectedRoute allowedRoles={MoH_ROLES} />}>
-                  <Route path="/dashboard" element={<CommandCenter />} />
-                  <Route path="/facilities" element={<Facilities />} />
-                  <Route path="/facilities/:id" element={<FacilityDetails />} />
-                  <Route path="/interoperability" element={<Interoperability />} />
-                  <Route path="/health" element={<SystemHealth />} />
-                  <Route path="/users" element={<UserManagement />} />
-                  <Route path="/requests" element={<RegistrationRequests />} /> {/* New Route */}
+                <Route path="/moh" element={<ProtectedRoute allowedRoles={MoH_ROLES} />}>
+                  <Route path="dashboard" element={<CommandCenter />} />
+                  <Route path="facilities" element={<Facilities />} />
+                  <Route path="facilities/:id" element={<FacilityDetails />} />
+                  <Route path="interoperability" element={<Interoperability />} />
+                  <Route path="health" element={<SystemHealth />} />
+                  <Route path="users" element={<UserManagement />} />
+                  <Route path="requests" element={<RegistrationRequests />} />
                 </Route>
 
-                {/* Shared MoH/Facility Admin Routes */}
-                <Route element={<ProtectedRoute allowedRoles={MOH_FACILITY_ROLES} />}>
-                  <Route path="/data-quality" element={<DataQuality />} />
-                  <Route path="/governance" element={<Governance />} />
+                {/* Facility Admin Routes */}
+                <Route path="/facility" element={<ProtectedRoute allowedRoles={FACILITY_ROLES} />}>
+                  <Route path="dashboard" element={<FacilityDashboard />} />
+                </Route>
+
+                {/* Developer Routes */}
+                <Route path="/developer" element={<ProtectedRoute allowedRoles={DEVELOPER_ROLES} />}>
+                  <Route path="dashboard" element={<DeveloperDashboard />} />
+                  <Route path="portal" element={<Developer />} />
+                </Route>
+
+                {/* Shared Routes (Accessible by multiple roles) */}
+                <Route path="/shared" element={<ProtectedRoute allowedRoles={SHARED_ROLES} />}>
+                  <Route path="audit" element={<Audit />} />
+                  {/* Developer portal is shared but also has a dedicated developer route */}
+                  <Route path="developer-portal" element={<Developer />} /> 
                 </Route>
                 
-                {/* Shared All Roles Routes (Logs, Developer Portal) */}
-                <Route element={<ProtectedRoute allowedRoles={SHARED_ROLES} />}>
-                  <Route path="/audit" element={<Audit />} />
-                  <Route path="/developer" element={<Developer />} />
+                {/* Shared MoH/Facility Admin Routes */}
+                <Route path="/admin" element={<ProtectedRoute allowedRoles={MOH_FACILITY_ROLES} />}>
+                  <Route path="data-quality" element={<DataQuality />} />
+                  <Route path="governance" element={<Governance />} />
                 </Route>
-
-                {/* Dedicated Dashboards */}
-                <Route element={<ProtectedRoute allowedRoles={FACILITY_ROLES} />}>
-                  <Route path="/facility-dashboard" element={<FacilityDashboard />} />
-                </Route>
-                <Route element={<ProtectedRoute allowedRoles={DEVELOPER_ROLES} />}>
-                  <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
-                </Route>
+                
               </Route>
             </Route>
 

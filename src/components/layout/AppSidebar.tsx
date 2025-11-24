@@ -12,7 +12,7 @@ import {
   LogOut,
   Users,
   Key,
-  Clock, // Added Clock icon for requests
+  Clock,
 } from "lucide-react";
 import {
   Sidebar,
@@ -35,29 +35,29 @@ interface MenuItem {
 }
 
 const MoH_MENU: MenuItem[] = [
-  { title: "Command Center", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Facility Registry", url: "/facilities", icon: Building2 },
-  { title: "Registration Requests", url: "/requests", icon: Clock }, // New item
-  { title: "Interoperability", url: "/interoperability", icon: Network },
-  { title: "Data Quality", url: "/data-quality", icon: Database },
-  { title: "Governance", url: "/governance", icon: Shield },
-  { title: "User Management", url: "/users", icon: Users },
-  { title: "Audit Logs", url: "/audit", icon: ScrollText },
-  { title: "System Health", url: "/health", icon: Activity },
+  { title: "Command Center", url: "/moh/dashboard", icon: LayoutDashboard },
+  { title: "Facility Registry", url: "/moh/facilities", icon: Building2 },
+  { title: "Registration Requests", url: "/moh/requests", icon: Clock },
+  { title: "Interoperability", url: "/moh/interoperability", icon: Network },
+  { title: "Data Quality", url: "/admin/data-quality", icon: Database },
+  { title: "Governance", url: "/admin/governance", icon: Shield },
+  { title: "User Management", url: "/moh/users", icon: Users },
+  { title: "Audit Logs", url: "/shared/audit", icon: ScrollText },
+  { title: "System Health", url: "/moh/health", icon: Activity },
 ];
 
 const FACILITY_ADMIN_MENU: MenuItem[] = [
-  { title: "Facility Dashboard", url: "/facility-dashboard", icon: LayoutDashboard },
-  { title: "Data Quality Score", url: "/data-quality", icon: Database },
-  { title: "API & Integrations", url: "/developer", icon: Key },
-  { title: "User Management", url: "/governance", icon: Users },
-  { title: "Facility Audit Logs", url: "/audit", icon: ScrollText },
+  { title: "Facility Dashboard", url: "/facility/dashboard", icon: LayoutDashboard },
+  { title: "Data Quality Score", url: "/admin/data-quality", icon: Database },
+  { title: "API & Integrations", url: "/shared/developer-portal", icon: Key },
+  { title: "User Management", url: "/admin/governance", icon: Users },
+  { title: "Facility Audit Logs", url: "/shared/audit", icon: ScrollText },
 ];
 
 const DEVELOPER_MENU: MenuItem[] = [
-  { title: "Developer Dashboard", url: "/developer-dashboard", icon: LayoutDashboard },
-  { title: "Developer Portal", url: "/developer", icon: Code2 }, // Consolidated links
-  { title: "API Logs & Analytics", url: "/audit", icon: ScrollText },
+  { title: "Developer Dashboard", url: "/developer/dashboard", icon: LayoutDashboard },
+  { title: "Developer Portal", url: "/developer/portal", icon: Code2 },
+  { title: "API Logs & Analytics", url: "/shared/audit", icon: ScrollText },
 ];
 
 const getMenuItems = (role: UserRole): MenuItem[] => {
@@ -100,7 +100,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
-                const isActive = location.pathname === item.url;
+                const isActive = location.pathname.startsWith(item.url); // Use startsWith for nested routes
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>

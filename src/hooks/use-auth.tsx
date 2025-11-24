@@ -115,11 +115,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const isPublicPath = currentPath === '/' || currentPath === '/login' || currentPath === '/register' || currentPath === '/moh-setup' || currentPath === '/unauthorized';
 
           if (profile?.role === "MoH" && isPublicPath) {
-            navigate("/dashboard", { replace: true });
+            navigate("/moh/dashboard", { replace: true });
           } else if (profile?.role === "FacilityAdmin" && isPublicPath) {
-            navigate("/facility-dashboard", { replace: true });
+            navigate("/facility/dashboard", { replace: true });
           } else if (profile?.role === "Developer" && isPublicPath) {
-            navigate("/developer-dashboard", { replace: true });
+            navigate("/developer/dashboard", { replace: true });
           } else if (profile?.role === null && currentPath !== '/register') {
             // User signed up but role/facility is pending approval/setup
             toast.info("Your account is pending setup or approval.");
@@ -128,7 +128,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         setUser(null);
-        if (location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/facilities')) {
+        // Redirect to login if trying to access any protected route without a session
+        if (location.pathname.includes('/moh') || location.pathname.includes('/facility') || location.pathname.includes('/developer') || location.pathname.includes('/admin') || location.pathname.includes('/shared')) {
             navigate("/login", { replace: true });
         }
       }
