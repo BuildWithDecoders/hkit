@@ -39,7 +39,7 @@ const Landing = () => {
               Kwara State Digital Health Backbone
             </Badge>
 
-            <h1 className="text-6xl md:text-8xl lg:text-[10rem] font-extrabold text-foreground leading-none tracking-tighter">
+            <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-[10rem] font-extrabold text-foreground leading-none tracking-tighter">
               <span className="block text-muted-foreground/50">HEALTH</span>
               <span className="block text-primary drop-shadow-[0_0_40px_hsl(var(--primary-glow))]">
                 INFRASTRUCTURE
