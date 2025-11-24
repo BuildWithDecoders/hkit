@@ -11,7 +11,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import CommandCenter from "./pages/CommandCenter";
 import Facilities from "./pages/Facilities";
-import FacilityDetails from "./pages/FacilityDetails"; // Import new page
+import FacilityDetails from "./pages/FacilityDetails";
 import Interoperability from "./pages/Interoperability";
 import DataQuality from "./pages/DataQuality";
 import Developer from "./pages/Developer";
@@ -20,6 +20,7 @@ import Audit from "./pages/Audit";
 import SystemHealth from "./pages/SystemHealth";
 import FacilityDashboard from "./pages/FacilityDashboard";
 import DeveloperDashboard from "./pages/DeveloperDashboard";
+import UserManagement from "./pages/UserManagement"; // Import new page
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 
@@ -53,9 +54,10 @@ const App = () => (
                 <Route element={<ProtectedRoute allowedRoles={MoH_ROLES} />}>
                   <Route path="/dashboard" element={<CommandCenter />} />
                   <Route path="/facilities" element={<Facilities />} />
-                  <Route path="/facilities/:id" element={<FacilityDetails />} /> {/* New Route */}
+                  <Route path="/facilities/:id" element={<FacilityDetails />} />
                   <Route path="/interoperability" element={<Interoperability />} />
                   <Route path="/health" element={<SystemHealth />} />
+                  <Route path="/users" element={<UserManagement />} /> {/* New Route */}
                 </Route>
 
                 {/* Shared MoH/Facility Admin Routes */}

@@ -39,6 +39,7 @@ const MoH_MENU: MenuItem[] = [
   { title: "Interoperability", url: "/interoperability", icon: Network },
   { title: "Data Quality", url: "/data-quality", icon: Database },
   { title: "Governance", url: "/governance", icon: Shield },
+  { title: "User Management", url: "/users", icon: Users }, // Added new item
   { title: "Audit Logs", url: "/audit", icon: ScrollText },
   { title: "System Health", url: "/health", icon: Activity },
 ];
