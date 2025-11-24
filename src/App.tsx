@@ -20,9 +20,10 @@ import Audit from "./pages/Audit";
 import SystemHealth from "./pages/SystemHealth";
 import FacilityDashboard from "./pages/FacilityDashboard";
 import DeveloperDashboard from "./pages/DeveloperDashboard";
-import UserManagement from "./pages/UserManagement"; // Import new page
+import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
+import MoHSignup from "./pages/MoHSignup"; // Import new page
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/moh-setup" element={<MoHSignup />} /> {/* New temporary route */}
             <Route path="/unauthorized" element={<Unauthorized />} />
 
             {/* Main Protected Route (Requires Authentication and provides AppLayout) */}
@@ -57,7 +59,7 @@ const App = () => (
                   <Route path="/facilities/:id" element={<FacilityDetails />} />
                   <Route path="/interoperability" element={<Interoperability />} />
                   <Route path="/health" element={<SystemHealth />} />
-                  <Route path="/users" element={<UserManagement />} /> {/* New Route */}
+                  <Route path="/users" element={<UserManagement />} />
                 </Route>
 
                 {/* Shared MoH/Facility Admin Routes */}

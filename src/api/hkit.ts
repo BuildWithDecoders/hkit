@@ -75,6 +75,44 @@ export async function updateFacilityStatus(id: number, status: FacilityStatus): 
   };
 }
 
+export async function signUpMoH(email: string, password: string, firstName: string, lastName: string): Promise<void> {
+  // 1. Create user in Supabase Auth
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        first_name: firstName,
+        last_name: lastName,
+      },
+    },
+  });
+
+  if (authError) {
+    throw new Error(authError.message);
+  }
+
+  const userId = authData.user?.id;
+
+  if (!userId) {
+    throw new Error("User creation failed, no user ID returned.");
+  }
+
+  // 2. Update the profile table to assign the MoH role immediately
+  // Note: The handle_new_user trigger runs first, creating a basic profile.
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({ role: 'MoH', first_name: firstName, last_name: lastName })
+    .eq('id', userId);
+
+  if (profileError) {
+    // If profile update fails, we should ideally log this and potentially delete the auth user.
+    console.error("Failed to set MoH role:", profileError);
+    throw new Error("User created, but failed to assign MoH role. Please contact support.");
+  }
+}
+
+
 // Placeholder for other data types (Audit Logs, FHIR Events)
 export interface AuditLog {
   id: number;
