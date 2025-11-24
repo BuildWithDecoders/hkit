@@ -3,20 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Code2, Clock, CheckCircle2, XCircle, Loader2, AlertTriangle, Eye } from "lucide-react";
-import { useRegistrationRequests, useApproveRequest, useRejectRequest } from "@/hooks/use-hkit-data";
+import { useRegistrationRequests, useRejectRequest } from "@/hooks/use-hkit-data";
 import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RegistrationRequest } from "@/api/hkit";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { UserCreationDialog } from "@/components/registration/UserCreationDialog";
 
 const RegistrationRequests = () => {
   const [activeTab, setActiveTab] = useState("pending");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isUserCreationDialogOpen, setIsUserCreationDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<RegistrationRequest | null>(null);
 
   const { data: requests, isLoading, isError } = useRegistrationRequests();
-  const approveMutation = useApproveRequest();
   const rejectMutation = useRejectRequest();
 
   const filteredRequests = useMemo(() => {
@@ -30,12 +31,9 @@ const RegistrationRequests = () => {
   const rejectedCount = requests?.filter(r => r.status === 'rejected').length || 0;
   const totalCount = requests?.length || 0;
 
-  const handleApprove = (request: RegistrationRequest) => {
-    approveMutation.mutate({ 
-      id: request.id, 
-      type: request.type, 
-      data: request.data 
-    });
+  const handleApproveClick = (request: RegistrationRequest) => {
+    setSelectedRequest(request);
+    setIsUserCreationDialogOpen(true);
   };
 
   const handleReject = (id: string) => {
@@ -44,7 +42,7 @@ const RegistrationRequests = () => {
 
   const handleViewDetails = (request: RegistrationRequest) => {
     setSelectedRequest(request);
-    setIsDialogOpen(true);
+    setIsDetailsDialogOpen(true);
   };
 
   const renderRequestCard = (request: RegistrationRequest) => {
@@ -101,8 +99,8 @@ const RegistrationRequests = () => {
                 <Button 
                   size="sm" 
                   className="bg-primary hover:bg-primary/90" 
-                  onClick={() => handleApprove(request)}
-                  disabled={approveMutation.isPending || rejectMutation.isPending}
+                  onClick={() => handleApproveClick(request)}
+                  disabled={rejectMutation.isPending}
                 >
                   Approve
                 </Button>
@@ -111,7 +109,7 @@ const RegistrationRequests = () => {
                   variant="destructive" 
                   className="border-destructive/50" 
                   onClick={() => handleReject(request.id)}
-                  disabled={approveMutation.isPending || rejectMutation.isPending}
+                  disabled={rejectMutation.isPending}
                 >
                   Reject
                 </Button>
@@ -181,7 +179,7 @@ const RegistrationRequests = () => {
         </TabsContent>
       </Tabs>
       
-      {(approveMutation.isPending || rejectMutation.isPending) && (
+      {rejectMutation.isPending && (
         <div className="fixed bottom-4 right-4 p-3 bg-primary text-primary-foreground rounded-lg shadow-lg flex items-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin" />
           Processing request...
@@ -189,7 +187,7 @@ const RegistrationRequests = () => {
       )}
 
       {/* Request Details Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -211,7 +209,7 @@ const RegistrationRequests = () => {
                 variant="destructive" 
                 onClick={() => {
                   handleReject(selectedRequest.id);
-                  setIsDialogOpen(false);
+                  setIsDetailsDialogOpen(false);
                 }}
               >
                 Reject
@@ -219,16 +217,23 @@ const RegistrationRequests = () => {
               <Button 
                 className="bg-primary hover:bg-primary/90" 
                 onClick={() => {
-                  handleApprove(selectedRequest);
-                  setIsDialogOpen(false);
+                  setIsDetailsDialogOpen(false);
+                  handleApproveClick(selectedRequest);
                 }}
               >
-                Approve & Create Record
+                Approve & Create Account
               </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
+      
+      {/* User Creation Dialog (Final Approval Step) */}
+      <UserCreationDialog
+        isOpen={isUserCreationDialogOpen}
+        onOpenChange={setIsUserCreationDialogOpen}
+        request={selectedRequest}
+      />
     </div>
   );
 };

@@ -139,7 +139,7 @@ export async function signUpMoH(email: string, password: string, firstName: stri
   }
 }
 
-// --- New Registration Request Functions ---
+// --- Registration Request Functions ---
 
 export async function submitFacilityRegistration(data: FacilityRegistrationData): Promise<void> {
   const { error } = await supabase
@@ -189,52 +189,6 @@ export async function fetchRegistrationRequests(): Promise<RegistrationRequest[]
   }));
 }
 
-export async function approveRegistrationRequest(requestId: string, requestType: 'facility' | 'developer', requestData: any): Promise<void> {
-  // 1. Update the request status
-  const { data: sessionData } = await supabase.auth.getSession();
-  const userId = sessionData.session?.user.id;
-
-  const { error: updateError } = await supabase
-    .from('registration_requests')
-    .update({ status: 'approved', approved_by: userId })
-    .eq('id', requestId);
-
-  if (updateError) {
-    console.error("Error updating request status:", updateError);
-    throw new Error("Failed to update request status.");
-  }
-
-  // 2. Handle specific approval logic
-  if (requestType === 'facility') {
-    // Insert into the main facilities table
-    const { error: facilityInsertError } = await supabase
-      .from('facilities')
-      .insert({
-        name: requestData.facilityName,
-        lga: requestData.lga,
-        type: requestData.facilityType,
-        status: 'pending', // Initial status is pending until admin user is created
-        compliance: 0,
-        administrators: 0,
-        api_activity: 'None',
-        last_sync: null,
-      });
-
-    if (facilityInsertError) {
-      console.error("Error inserting new facility:", facilityInsertError);
-      throw new Error("Failed to create new facility record.");
-    }
-    
-    // NOTE: We stop here. The next step (creating the Facility Admin user) 
-    // should be a separate action or handled by a dedicated MoH workflow, 
-    // as it requires creating a new user account and linking it to the new facility ID.
-    // For now, we just create the facility record.
-  }
-  
-  // Developer requests are approved but don't create a facility record.
-  // They would typically trigger an email with API keys/sandbox access.
-}
-
 export async function rejectRegistrationRequest(requestId: string): Promise<void> {
   const { data: sessionData } = await supabase.auth.getSession();
   const userId = sessionData.session?.user.id;
@@ -247,6 +201,104 @@ export async function rejectRegistrationRequest(requestId: string): Promise<void
   if (error) {
     console.error("Error rejecting request:", error);
     throw new Error("Failed to reject registration request.");
+  }
+}
+
+// New function to handle user creation and final approval steps
+export async function createApprovedUser({
+  requestId,
+  requestType,
+  requestData,
+  email,
+  password,
+  name,
+  role,
+}: {
+  requestId: string;
+  requestType: 'facility' | 'developer';
+  requestData: any;
+  email: string;
+  password: string;
+  name: string;
+  role: 'FacilityAdmin' | 'Developer';
+}): Promise<void> {
+  
+  // 1. Create the user in Supabase Auth
+  const [firstName, ...lastNameParts] = name.split(' ');
+  const lastName = lastNameParts.join(' ');
+
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true, // Automatically confirm the email since MoH is creating it
+    user_metadata: {
+      first_name: firstName,
+      last_name: lastName,
+    },
+  });
+
+  if (authError) {
+    throw new Error(`Auth user creation failed: ${authError.message}`);
+  }
+
+  const userId = authData.user.id;
+  let facilityId: number | undefined;
+
+  // 2. Handle Facility-specific logic: Create facility record and get its ID
+  if (requestType === 'facility') {
+    const { data: facilityData, error: facilityInsertError } = await supabase
+      .from('facilities')
+      .insert({
+        name: requestData.facilityName,
+        lga: requestData.lga,
+        type: requestData.facilityType,
+        status: 'verified', // Mark as verified since the admin user is being created
+        administrators: 1,
+        compliance: 0,
+        api_activity: 'None',
+        last_sync: null,
+      })
+      .select('id')
+      .single();
+
+    if (facilityInsertError) {
+      console.error("Error inserting new facility:", facilityInsertError);
+      // IMPORTANT: If facility creation fails, we should ideally delete the auth user created in step 1.
+      // For simplicity here, we throw and rely on manual cleanup if this happens.
+      throw new Error("Failed to create new facility record.");
+    }
+    facilityId = facilityData.id;
+  }
+  
+  // 3. Update the user's profile with the correct role and facility ID
+  // Note: The handle_new_user trigger already created a basic profile, so we UPDATE.
+  const { error: profileUpdateError } = await supabase
+    .from('profiles')
+    .update({ 
+      role: role, 
+      facility_id: facilityId || null,
+      first_name: firstName,
+      last_name: lastName,
+    })
+    .eq('id', userId);
+
+  if (profileUpdateError) {
+    console.error("Failed to set role/facility ID:", profileUpdateError);
+    throw new Error("User created, but failed to assign role/facility ID.");
+  }
+
+  // 4. Mark the registration request as approved
+  const { data: sessionData } = await supabase.auth.getSession();
+  const mohUserId = sessionData.session?.user.id;
+
+  const { error: updateRequestError } = await supabase
+    .from('registration_requests')
+    .update({ status: 'approved', approved_by: mohUserId })
+    .eq('id', requestId);
+
+  if (updateRequestError) {
+    console.error("Error updating request status:", updateRequestError);
+    throw new Error("Failed to mark request as approved.");
   }
 }
 

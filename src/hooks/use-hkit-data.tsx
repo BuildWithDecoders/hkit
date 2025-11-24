@@ -6,15 +6,15 @@ import {
   fetchFhirEvents,
   fetchConsentRecords,
   revokeConsent,
-  fetchRegistrationRequests, // New import
-  approveRegistrationRequest, // New import
-  rejectRegistrationRequest, // New import
+  fetchRegistrationRequests,
+  rejectRegistrationRequest,
+  createApprovedUser, // New import
   Facility,
   FacilityStatus,
   AuditLog,
   FhirEvent,
   ConsentRecord,
-  RegistrationRequest, // New import
+  RegistrationRequest,
 } from "@/api/hkit";
 import { toast } from "sonner";
 import { useAuth } from "./use-auth";
@@ -46,6 +46,8 @@ export function useApproveFacility() {
   });
 }
 
+// ... (useRejectFacility remains the same)
+
 export function useRejectFacility() {
   const queryClient = useQueryClient();
   return useMutation<Facility, Error, number>({
@@ -73,24 +75,25 @@ export function useRegistrationRequests() {
   });
 }
 
-export function useApproveRequest() {
-  const queryClient = useQueryClient();
-  return useMutation<void, Error, { id: string, type: 'facility' | 'developer', data: any }>({
-    mutationFn: ({ id, type, data }) => approveRegistrationRequest(id, type, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["registrationRequests"] });
-      queryClient.invalidateQueries({ queryKey: ["facilities"] });
-      toast.success(`${variables.type === 'facility' ? 'Facility' : 'Developer'} request approved!`, {
-        description: "A new record has been created.",
-      });
-    },
-    onError: (error) => {
-      toast.error("Approval Failed", {
-        description: error.message,
-      });
-    },
-  });
-}
+// This hook is now deprecated/removed as the logic moves to useCreateApprovedUser
+// export function useApproveRequest() {
+//   const queryClient = useQueryClient();
+//   return useMutation<void, Error, { id: string, type: 'facility' | 'developer', data: any }>({
+//     mutationFn: ({ id, type, data }) => approveRegistrationRequest(id, type, data),
+//     onSuccess: (_, variables) => {
+//       queryClient.invalidateQueries({ queryKey: ["registrationRequests"] });
+//       queryClient.invalidateQueries({ queryKey: ["facilities"] });
+//       toast.success(`${variables.type === 'facility' ? 'Facility' : 'Developer'} request approved!`, {
+//         description: "A new record has been created.",
+//       });
+//     },
+//     onError: (error) => {
+//       toast.error("Approval Failed", {
+//         description: error.message,
+//       });
+//     },
+//   });
+// }
 
 export function useRejectRequest() {
   const queryClient = useQueryClient();
@@ -104,6 +107,30 @@ export function useRejectRequest() {
     },
     onError: (error) => {
       toast.error("Rejection Failed", {
+        description: error.message,
+      });
+    },
+  });
+}
+
+export function useCreateApprovedUser() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, { 
+    requestId: string, 
+    requestType: 'facility' | 'developer', 
+    requestData: any, 
+    email: string, 
+    password: string, 
+    name: string, 
+    role: 'FacilityAdmin' | 'Developer' 
+  }>({
+    mutationFn: createApprovedUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["registrationRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["facilities"] });
+    },
+    onError: (error) => {
+      toast.error("User Creation Failed", {
         description: error.message,
       });
     },
