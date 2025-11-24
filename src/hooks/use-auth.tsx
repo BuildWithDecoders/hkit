@@ -30,7 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 async function fetchUserProfile(supabaseUser: SupabaseUser): Promise<UserProfile | null> {
   let profileData = null;
   let attempts = 0;
-  const maxAttempts = 5; // Increased attempts for robustness against race conditions
+  const maxAttempts = 5; 
 
   while (attempts < maxAttempts) {
     const { data, error } = await supabase
@@ -51,7 +51,6 @@ async function fetchUserProfile(supabaseUser: SupabaseUser): Promise<UserProfile
     
     if (attempts < maxAttempts - 1) {
       // Wait a bit before retrying if profile is missing or role is null
-      // Reduced delay from 500ms to 50ms for faster perceived load time
       await new Promise(resolve => setTimeout(resolve, 50));
     }
     attempts++;
@@ -100,19 +99,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 1. Initial Load and Auth State Listener
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+  // Function to handle session and profile setup/redirection
+  const handleSession = async (currentSession: Session | null, event?: string) => {
+    try {
       setSession(currentSession);
       
       if (currentSession?.user) {
         const profile = await fetchUserProfile(currentSession.user);
         setUser(profile);
         
-        // Redirect logic after sign-in
-        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        // Redirect logic
+        // event === undefined means it's the initial getSession call
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === undefined) {
           const currentPath = location.pathname;
-          // Only redirect if the user is on a public/unauthorized entry point
           const isPublicPath = currentPath === '/' || currentPath === '/login' || currentPath === '/register' || currentPath === '/moh-setup' || currentPath === '/unauthorized';
 
           if (profile?.role === "MoH" && isPublicPath) {
@@ -134,13 +133,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             navigate("/login", { replace: true });
         }
       }
+    } catch (e) {
+      console.error("Error processing session:", e);
+    } finally {
       setIsLoading(false);
+    }
+  };
+
+  // 1. Initial Load (Explicitly fetch session once)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleSession(session);
+    }).catch(e => {
+      console.error("Error fetching initial session:", e);
+      setIsLoading(false);
+    });
+  }, []); // Run only once on mount
+
+  // 2. Auth State Listener (For real-time changes like sign in/out)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      // Only handle events here, initial load is handled above
+      if (event !== 'INITIAL_SESSION') {
+        handleSession(currentSession, event);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate, location.pathname]);
 
-  // 2. Login Function
+  // 3. Login Function
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -154,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Success handled by onAuthStateChange listener
   };
 
-  // 3. Logout Function
+  // 4. Logout Function
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
