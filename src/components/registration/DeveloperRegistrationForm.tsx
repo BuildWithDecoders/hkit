@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardContent } from "@/components/ui/card";
-import { Code2, Mail, Users } from "lucide-react";
+import { Code2, Loader2 } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -15,6 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { submitDeveloperRegistration, DeveloperRegistrationData } from "@/api/hkit";
 
 const developerSchema = z.object({
   organizationName: z.string().min(3, "Organization name is required"),
@@ -38,13 +39,21 @@ export function DeveloperRegistrationForm() {
     },
   });
 
-  const onSubmit = (data: DeveloperFormValues) => {
-    console.log("Developer Registration Data:", data);
-    toast.success("Developer request submitted!", {
-      description: "You will receive sandbox credentials and documentation access upon approval.",
-    });
-    form.reset();
+  const onSubmit = async (data: DeveloperFormValues) => {
+    try {
+      await submitDeveloperRegistration(data as DeveloperRegistrationData);
+      toast.success("Developer request submitted!", {
+        description: "Your request is pending MoH approval. You will receive sandbox credentials upon approval.",
+      });
+      form.reset();
+    } catch (error) {
+      toast.error("Submission Failed", {
+        description: error instanceof Error ? error.message : "An unknown error occurred.",
+      });
+    }
   };
+
+  const isSubmitting = form.formState.isSubmitting;
 
   return (
     <CardContent className="p-0">
@@ -58,7 +67,7 @@ export function DeveloperRegistrationForm() {
                 <FormItem>
                   <FormLabel>Organization Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="EMR Solutions Inc." {...field} className="bg-secondary border-border" />
+                    <Input placeholder="EMR Solutions Inc." {...field} className="bg-secondary border-border" disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -71,7 +80,7 @@ export function DeveloperRegistrationForm() {
                 <FormItem>
                   <FormLabel>System Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="MediFlow EMR" {...field} className="bg-secondary border-border" />
+                    <Input placeholder="MediFlow EMR" {...field} className="bg-secondary border-border" disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -89,7 +98,7 @@ export function DeveloperRegistrationForm() {
                 <FormItem>
                   <FormLabel>Contact Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="John Developer" {...field} className="bg-secondary border-border" />
+                    <Input placeholder="John Developer" {...field} className="bg-secondary border-border" disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -102,7 +111,7 @@ export function DeveloperRegistrationForm() {
                 <FormItem>
                   <FormLabel>Contact Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="tech@emrsolutions.com" {...field} className="bg-secondary border-border" />
+                    <Input type="email" placeholder="tech@emrsolutions.com" {...field} className="bg-secondary border-border" disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -121,6 +130,7 @@ export function DeveloperRegistrationForm() {
                     placeholder="Describe how your system will interact with the HIE (e.g., submitting patient demographics, retrieving lab results)."
                     className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 bg-secondary border-border"
                     {...field}
+                    disabled={isSubmitting}
                   />
                 </FormControl>
                 <FormMessage />
@@ -128,8 +138,12 @@ export function DeveloperRegistrationForm() {
             )}
           />
 
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-            <Code2 className="w-4 h-4 mr-2" />
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Code2 className="w-4 h-4 mr-2" />
+            )}
             Request Developer Access
           </Button>
         </form>

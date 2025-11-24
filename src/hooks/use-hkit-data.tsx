@@ -6,11 +6,15 @@ import {
   fetchFhirEvents,
   fetchConsentRecords,
   revokeConsent,
+  fetchRegistrationRequests, // New import
+  approveRegistrationRequest, // New import
+  rejectRegistrationRequest, // New import
   Facility,
   FacilityStatus,
   AuditLog,
   FhirEvent,
-  ConsentRecord
+  ConsentRecord,
+  RegistrationRequest, // New import
 } from "@/api/hkit";
 import { toast } from "sonner";
 import { useAuth } from "./use-auth";
@@ -59,6 +63,53 @@ export function useRejectFacility() {
     },
   });
 }
+
+// --- Registration Request Hooks ---
+
+export function useRegistrationRequests() {
+  return useQuery<RegistrationRequest[]>({
+    queryKey: ["registrationRequests"],
+    queryFn: fetchRegistrationRequests,
+  });
+}
+
+export function useApproveRequest() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, { id: string, type: 'facility' | 'developer', data: any }>({
+    mutationFn: ({ id, type, data }) => approveRegistrationRequest(id, type, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["registrationRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["facilities"] });
+      toast.success(`${variables.type === 'facility' ? 'Facility' : 'Developer'} request approved!`, {
+        description: "A new record has been created.",
+      });
+    },
+    onError: (error) => {
+      toast.error("Approval Failed", {
+        description: error.message,
+      });
+    },
+  });
+}
+
+export function useRejectRequest() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, string>({
+    mutationFn: (id: string) => rejectRegistrationRequest(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["registrationRequests"] });
+      toast.warning("Request rejected.", {
+        description: "The status has been updated.",
+      });
+    },
+    onError: (error) => {
+      toast.error("Rejection Failed", {
+        description: error.message,
+      });
+    },
+  });
+}
+
 
 // --- Audit & Interoperability Hooks ---
 

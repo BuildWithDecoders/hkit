@@ -12,6 +12,7 @@ import {
   LogOut,
   Users,
   Key,
+  Clock, // Added Clock icon for requests
 } from "lucide-react";
 import {
   Sidebar,
@@ -36,10 +37,11 @@ interface MenuItem {
 const MoH_MENU: MenuItem[] = [
   { title: "Command Center", url: "/dashboard", icon: LayoutDashboard },
   { title: "Facility Registry", url: "/facilities", icon: Building2 },
+  { title: "Registration Requests", url: "/requests", icon: Clock }, // New item
   { title: "Interoperability", url: "/interoperability", icon: Network },
   { title: "Data Quality", url: "/data-quality", icon: Database },
   { title: "Governance", url: "/governance", icon: Shield },
-  { title: "User Management", url: "/users", icon: Users }, // Added new item
+  { title: "User Management", url: "/users", icon: Users },
   { title: "Audit Logs", url: "/audit", icon: ScrollText },
   { title: "System Health", url: "/health", icon: Activity },
 ];

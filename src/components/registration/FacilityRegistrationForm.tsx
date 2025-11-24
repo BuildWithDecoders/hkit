@@ -5,9 +5,8 @@ import * as z from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Building2, Mail, Phone, MapPin } from "lucide-react";
+import { CardContent } from "@/components/ui/card";
+import { Building2, Loader2 } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -16,6 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { submitFacilityRegistration, FacilityRegistrationData } from "@/api/hkit";
 
 const facilitySchema = z.object({
   facilityName: z.string().min(3, "Facility name is required"),
@@ -41,13 +41,21 @@ export function FacilityRegistrationForm() {
     },
   });
 
-  const onSubmit = (data: FacilityFormValues) => {
-    console.log("Facility Registration Data:", data);
-    toast.success("Registration submitted!", {
-      description: "Your facility is now pending MoH approval. We will contact you shortly.",
-    });
-    form.reset();
+  const onSubmit = async (data: FacilityFormValues) => {
+    try {
+      await submitFacilityRegistration(data as FacilityRegistrationData);
+      toast.success("Registration submitted!", {
+        description: "Your facility is now pending MoH approval. We will contact you shortly.",
+      });
+      form.reset();
+    } catch (error) {
+      toast.error("Submission Failed", {
+        description: error instanceof Error ? error.message : "An unknown error occurred.",
+      });
+    }
   };
+
+  const isSubmitting = form.formState.isSubmitting;
 
   return (
     <CardContent className="p-0">
@@ -61,7 +69,7 @@ export function FacilityRegistrationForm() {
                 <FormItem>
                   <FormLabel>Facility Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="General Hospital Ilorin" {...field} className="bg-secondary border-border" />
+                    <Input placeholder="General Hospital Ilorin" {...field} className="bg-secondary border-border" disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -74,7 +82,7 @@ export function FacilityRegistrationForm() {
                 <FormItem>
                   <FormLabel>Facility Type</FormLabel>
                   <FormControl>
-                    <Input placeholder="Public / Private Clinic" {...field} className="bg-secondary border-border" />
+                    <Input placeholder="Public / Private Clinic" {...field} className="bg-secondary border-border" disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -89,7 +97,7 @@ export function FacilityRegistrationForm() {
               <FormItem>
                 <FormLabel>Local Government Area (LGA)</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ilorin West" {...field} className="bg-secondary border-border" />
+                  <Input placeholder="Ilorin West" {...field} className="bg-secondary border-border" disabled={isSubmitting} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -105,7 +113,7 @@ export function FacilityRegistrationForm() {
               <FormItem>
                 <FormLabel>Contact Person Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Jane Doe" {...field} className="bg-secondary border-border" />
+                  <Input placeholder="Jane Doe" {...field} className="bg-secondary border-border" disabled={isSubmitting} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -120,7 +128,7 @@ export function FacilityRegistrationForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="contact@hospital.com" {...field} className="bg-secondary border-border" />
+                    <Input type="email" placeholder="contact@hospital.com" {...field} className="bg-secondary border-border" disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -133,7 +141,7 @@ export function FacilityRegistrationForm() {
                 <FormItem>
                   <FormLabel>Phone Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="+234 80..." {...field} className="bg-secondary border-border" />
+                    <Input placeholder="+234 80..." {...field} className="bg-secondary border-border" disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -141,8 +149,12 @@ export function FacilityRegistrationForm() {
             />
           </div>
 
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-            <Building2 className="w-4 h-4 mr-2" />
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Building2 className="w-4 h-4 mr-2" />
+            )}
             Submit Facility Registration
           </Button>
         </form>
