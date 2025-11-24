@@ -90,17 +90,17 @@ const Landing = () => {
               <Card
                 key={i}
                 className={cn(
-                  "p-6 border-border bg-card/50 backdrop-blur-sm transition-all duration-300",
+                  "p-8 border-border bg-card transition-all duration-300",
                   "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10",
                   "animate-fade-in"
                 )}
                 style={{ animationDelay: `${i * 100}ms` }}
               >
                 <div className="flex items-center gap-4 mb-4">
-                  <feature.icon className="w-6 h-6 text-primary flex-shrink-0" />
-                  <h3 className="text-xl font-semibold text-foreground">{feature.title}</h3>
+                  <feature.icon className="w-7 h-7 text-primary flex-shrink-0" />
+                  <h3 className="text-2xl font-bold text-foreground">{feature.title}</h3>
                 </div>
-                <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
+                <p className="text-muted-foreground text-base leading-relaxed mt-4">{feature.description}</p>
               </Card>
             ))}
           </div>
