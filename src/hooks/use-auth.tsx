@@ -26,17 +26,38 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper function to fetch profile and facility data
+// Helper function to fetch profile and facility data with retry logic
 async function fetchUserProfile(supabaseUser: SupabaseUser): Promise<UserProfile | null> {
-  const { data: profileData, error: profileError } = await supabase
-    .from('profiles')
-    .select('role, facility_id, first_name, last_name')
-    .eq('id', supabaseUser.id)
-    .single();
+  let profileData = null;
+  let attempts = 0;
+  const maxAttempts = 5; // Increased attempts for robustness against race conditions
 
-  if (profileError) {
-    console.error("Error fetching profile:", profileError);
-    // If profile doesn't exist yet (e.g., new signup before trigger runs), return basic info
+  while (attempts < maxAttempts) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role, facility_id, first_name, last_name')
+      .eq('id', supabaseUser.id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 is 'No rows found'
+      console.error(`Error fetching profile (Attempt ${attempts + 1}):`, error);
+      break;
+    }
+    
+    if (data && data.role) {
+      profileData = data;
+      break; // Found profile with role, success!
+    }
+    
+    if (attempts < maxAttempts - 1) {
+      // Wait a bit before retrying if profile is missing or role is null
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    attempts++;
+  }
+  
+  if (!profileData) {
+    // If profile still not found or role is null after retries, return basic info
     return {
       id: supabaseUser.id,
       email: supabaseUser.email || '',
