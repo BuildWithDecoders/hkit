@@ -22,6 +22,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -110,10 +111,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Redirect logic
         // event === undefined means it's the initial getSession call
-        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === undefined) {
-          const currentPath = location.pathname;
-          const isPublicPath = currentPath === '/' || currentPath === '/login' || currentPath === '/register' || currentPath === '/moh-setup' || currentPath === '/unauthorized';
+        const currentPath = location.pathname;
+        const isPublicPath = currentPath === '/' || currentPath === '/login' || currentPath === '/register' || currentPath === '/moh-setup' || currentPath === '/unauthorized';
 
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === undefined) {
           if (profile?.role === "MoH" && isPublicPath) {
             navigate("/moh/dashboard", { replace: true });
           } else if (profile?.role === "FacilityAdmin" && isPublicPath) {
@@ -136,6 +137,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.error("Error processing session:", e);
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // New function to manually refresh profile data
+  const refreshProfile = async () => {
+    if (session?.user) {
+      setIsLoading(true);
+      const profile = await fetchUserProfile(session.user);
+      setUser(profile);
       setIsLoading(false);
     }
   };
@@ -199,7 +210,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout,
     isAuthenticated,
     isLoading,
-  }), [user, role, isAuthenticated, isLoading]);
+    refreshProfile,
+  }), [user, role, isAuthenticated, isLoading, session]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

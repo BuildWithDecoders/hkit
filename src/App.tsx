@@ -25,6 +25,7 @@ import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 import MoHSignup from "./pages/MoHSignup";
 import RegistrationRequests from "./pages/RegistrationRequests";
+import ProfileSettings from "./pages/ProfileSettings"; // Import new page
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,7 @@ const App = () => (
                   <Route path="audit" element={<Audit />} />
                   {/* Developer portal is shared but also has a dedicated developer route */}
                   <Route path="developer-portal" element={<Developer />} /> 
+                  <Route path="profile" element={<ProfileSettings />} /> {/* New Profile Route */}
                 </Route>
                 
                 {/* Shared MoH/Facility Admin Routes */}

@@ -139,6 +139,18 @@ export async function signUpMoH(email: string, password: string, firstName: stri
   }
 }
 
+export async function updateUserProfile(userId: string, firstName: string, lastName: string): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ first_name: firstName, last_name: lastName, updated_at: new Date().toISOString() })
+    .eq('id', userId);
+
+  if (error) {
+    console.error("Error updating profile:", error);
+    throw new Error(`Failed to update profile: ${error.message}`);
+  }
+}
+
 // --- Registration Request Functions ---
 
 export async function submitFacilityRegistration(data: FacilityRegistrationData): Promise<void> {

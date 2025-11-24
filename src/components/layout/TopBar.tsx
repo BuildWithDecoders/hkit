@@ -1,4 +1,4 @@
-import { Bell, User, LogOut } from "lucide-react";
+import { Bell, User, LogOut, Settings } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,15 +11,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
+import { useNavigate } from "react-router-dom";
 
 export function TopBar() {
   const { user, role, logout } = useAuth();
+  const navigate = useNavigate();
 
   const getRoleLabel = () => {
     if (role === "MoH") return "MoH Administrator";
     if (role === "FacilityAdmin") return user?.facilityName || "Facility Admin";
     if (role === "Developer") return user?.name || "Developer";
     return "Guest";
+  };
+
+  const handleNavigateToProfile = () => {
+    navigate("/shared/profile");
   };
 
   return (
@@ -75,8 +81,14 @@ export function TopBar() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>{user?.name || "User Profile"}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleNavigateToProfile}>
+              <User className="w-4 h-4 mr-2" />
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleNavigateToProfile}>
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>
               <LogOut className="w-4 h-4 mr-2" />
