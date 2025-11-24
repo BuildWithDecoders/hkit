@@ -64,7 +64,7 @@ export function useRejectFacility() {
 
 export function useAuditLogs() {
     const { role, user } = useAuth();
-    const facilityName = user?.facility;
+    const facilityName = user?.facilityName;
     
     return useQuery<AuditLog[]>({
         queryKey: ["auditLogs", role, facilityName],
@@ -83,7 +83,7 @@ export function useFhirEvents() {
 
 export function useConsentRecords() {
     const { role, user } = useAuth();
-    const facilityName = user?.facility;
+    const facilityName = user?.facilityName;
 
     return useQuery<ConsentRecord[]>({
         queryKey: ["consentRecords", role, facilityName],

@@ -28,7 +28,7 @@ const Governance = () => {
   const { role, user } = useAuth();
 
   const getTitle = () => {
-    if (role === "FacilityAdmin") return `${user?.facility || 'Facility'} User & Consent Management`;
+    if (role === "FacilityAdmin") return `${user?.facilityName || 'Facility'} User & Consent Management`;
     return "Consent & Identity Governance";
   };
 

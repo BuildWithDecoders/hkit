@@ -13,7 +13,7 @@ const Audit = () => {
   const { role, user } = useAuth();
 
   const getTitle = () => {
-    if (role === "FacilityAdmin") return `${user?.facility || 'Facility'} Audit Logs`;
+    if (role === "FacilityAdmin") return `${user?.facilityName || 'Facility'} Audit Logs`;
     if (role === "Developer") return `${user?.name || 'Developer'} API Logs`;
     return "Audit Logs";
   };

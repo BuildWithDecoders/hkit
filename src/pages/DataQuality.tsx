@@ -9,7 +9,7 @@ import { mockFacilityScores } from "@/api/hkit";
 
 const DataQuality = () => {
   const { role, user } = useAuth();
-  const facilityName = user?.facility;
+  const facilityName = user?.facilityName;
 
   const getTitle = () => {
     if (role === "FacilityAdmin") return `${facilityName || 'Your Facility'} Data Quality Score`;

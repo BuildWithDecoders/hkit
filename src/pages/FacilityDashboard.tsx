@@ -16,7 +16,7 @@ const activityData = [
 
 const FacilityDashboard = () => {
   const { user } = useAuth();
-  const facilityName = user?.facility || "Your Facility";
+  const facilityName = user?.facilityName || "Your Facility";
 
   return (
     <div className="p-6 space-y-6">

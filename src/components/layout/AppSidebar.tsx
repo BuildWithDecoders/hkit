@@ -93,7 +93,7 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-muted-foreground">
-            {role === "MoH" ? "Oversight" : user?.facility || user?.name}
+            {role === "MoH" ? "Oversight" : user?.facilityName || user?.name}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

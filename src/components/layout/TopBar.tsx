@@ -17,7 +17,7 @@ export function TopBar() {
 
   const getRoleLabel = () => {
     if (role === "MoH") return "MoH Administrator";
-    if (role === "FacilityAdmin") return user?.facility || "Facility Admin";
+    if (role === "FacilityAdmin") return user?.facilityName || "Facility Admin";
     if (role === "Developer") return user?.name || "Developer";
     return "Guest";
   };
