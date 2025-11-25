@@ -9,12 +9,14 @@ import {
   fetchRegistrationRequests,
   rejectRegistrationRequest,
   createApprovedUser,
+  fetchMpiRecords, // Import new MPI function
   Facility,
   FacilityStatus,
   AuditLog,
   FhirEvent,
   ConsentRecord,
   RegistrationRequest,
+  MpiRecord, // Import new MPI type
 } from "@/api/hkit";
 import { toast } from "sonner";
 import { useAuth } from "./use-auth";
@@ -61,6 +63,7 @@ export function useRejectFacility() {
       toast.error(`Facility ${updatedFacility.name} rejected.`, {
         description: "The facility contact has been notified.",
       });
+    });
     },
     onError: (error) => {
       toast.error("Failed to reject facility.", {
@@ -148,6 +151,7 @@ export function useAuditLogs() {
     const { role, user } = useAuth();
     const facilityName = user?.facilityName;
     
+    // The API function now handles the filtering logic based on RLS
     return useQuery<AuditLog[]>({
         queryKey: ["auditLogs", role, facilityName],
         queryFn: () => fetchAuditLogs(role || "Guest", facilityName),
@@ -167,9 +171,10 @@ export function useConsentRecords() {
     const { role, user } = useAuth();
     const facilityName = user?.facilityName;
 
+    // The API function now handles the filtering logic based on RLS
     return useQuery<ConsentRecord[]>({
         queryKey: ["consentRecords", role, facilityName],
-        queryFn: () => fetchConsentRecords(role || "Guest", facilityName),
+        queryFn: fetchConsentRecords,
     });
 }
 
@@ -188,5 +193,17 @@ export function useRevokeConsent() {
                 description: error.message,
             });
         },
+    });
+}
+
+// --- New MPI Hook ---
+
+export function useMpiRecords() {
+    const { role, user } = useAuth();
+    const facilityName = user?.facilityName;
+
+    return useQuery<MpiRecord[]>({
+        queryKey: ["mpiRecords", role, facilityName],
+        queryFn: fetchMpiRecords,
     });
 }

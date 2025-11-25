@@ -4,18 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, User, Shield, Clock, Check, X, Loader2, AlertTriangle, Plus } from "lucide-react";
-import { useConsentRecords, useRevokeConsent } from "@/hooks/use-hkit-data";
+import { useConsentRecords, useRevokeConsent, useMpiRecords } from "@/hooks/use-hkit-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
-const mpiRecords = [
-  { id: "KW2024001234", name: "Oluwaseun Adebayo", dob: "1985-03-15", gender: "Male", facility: "General Hospital", verified: true },
-  { id: "KW2024001235", name: "Aisha Mohammed", dob: "1992-07-22", gender: "Female", facility: "Baptist Medical", verified: true },
-  { id: "KW2024001236", name: "Chukwudi Okafor", dob: "1978-11-10", gender: "Male", facility: "Sobi Hospital", verified: false },
-];
-
-// Mock data for Facility Admin User Management
+// Mock data for Facility Admin User Management (remains local mock for now)
 const facilityUsers = [
   { id: 1, name: "Dr. Jane Doe", role: "Clinician", email: "jane.doe@ghilorin.com", status: "Active" },
   { id: 2, name: "Mr. John Smith", role: "Data Entry", email: "john.smith@ghilorin.com", status: "Active" },
@@ -24,6 +18,7 @@ const facilityUsers = [
 
 const Governance = () => {
   const { data: consentRecords, isLoading: isLoadingConsent, isError: isErrorConsent } = useConsentRecords();
+  const { data: mpiRecords, isLoading: isLoadingMpi, isError: isErrorMpi } = useMpiRecords();
   const revokeMutation = useRevokeConsent();
   const { role, user } = useAuth();
 
@@ -61,6 +56,96 @@ const Governance = () => {
     toast.info(`Action: Editing user ID: ${userId} (Mock Action)`);
   };
 
+  const renderMpiContent = () => {
+    if (isLoadingMpi) {
+      return (
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="p-6 border-border">
+              <Skeleton className="h-16 w-full" />
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
+    if (isErrorMpi || !mpiRecords) {
+      return (
+        <Card className="p-8 border-destructive/20 bg-destructive/10 text-center">
+          <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-3" />
+          <p className="text-destructive">Error loading Master Patient Index data.</p>
+        </Card>
+      );
+    }
+    
+    if (mpiRecords.length === 0) {
+        return (
+            <Card className="p-8 border-border text-center bg-secondary/50">
+                <User className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">No patient records found in the MPI.</p>
+            </Card>
+        );
+    }
+
+    return (
+      <div className="space-y-3">
+        {mpiRecords.map((record) => (
+          <Card key={record.id} className="p-6 border-border hover:border-primary/50 transition-colors">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                  <User className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="font-semibold text-foreground">{record.firstName} {record.lastName}</h3>
+                    {record.verified ? (
+                      <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                        <Check className="w-3 h-3 mr-1" />
+                        Verified
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Pending
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Health ID: </span>
+                      <span className="text-foreground font-medium">{record.stateHealthId}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">DOB: </span>
+                      <span className="text-foreground">{record.dateOfBirth}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Gender: </span>
+                      <span className="text-foreground">{record.gender}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Facility: </span>
+                      <span className="text-foreground">{record.facility}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-border"
+                onClick={() => handleViewFullRecord(record.id)}
+              >
+                View Full Record
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
   const renderConsentContent = () => {
     if (isLoadingConsent) {
       return (
@@ -81,6 +166,15 @@ const Governance = () => {
           <p className="text-destructive">Error loading consent data.</p>
         </Card>
       );
+    }
+    
+    if (consentRecords.length === 0) {
+        return (
+            <Card className="p-8 border-border text-center bg-secondary/50">
+                <Shield className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">No active consent records found.</p>
+            </Card>
+        );
     }
 
     return (
@@ -243,61 +337,7 @@ const Governance = () => {
             </Button>
           </div>
 
-          <div className="space-y-3">
-            {mpiRecords.map((record) => (
-              <Card key={record.id} className="p-6 border-border hover:border-primary/50 transition-colors">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                      <User className="w-6 h-6 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-foreground">{record.name}</h3>
-                        {record.verified ? (
-                          <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-                            <Check className="w-3 h-3 mr-1" />
-                            Verified
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
-                            <Clock className="w-3 h-3 mr-1" />
-                            Pending
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Health ID: </span>
-                          <span className="text-foreground font-medium">{record.id}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">DOB: </span>
-                          <span className="text-foreground">{record.dob}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Gender: </span>
-                          <span className="text-foreground">{record.gender}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Facility: </span>
-                          <span className="text-foreground">{record.facility}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="border-border"
-                    onClick={() => handleViewFullRecord(record.id)}
-                  >
-                    View Full Record
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
+          {renderMpiContent()}
         </TabsContent>
 
         <TabsContent value="consent" className="space-y-4 mt-6">

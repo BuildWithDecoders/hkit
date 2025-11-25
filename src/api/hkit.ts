@@ -53,7 +53,7 @@ export async function fetchFacilities(role: UserRole, facilityId?: number): Prom
   if (role === 'FacilityAdmin' && facilityId) {
     // RLS should handle security, but we filter here for efficiency and clarity
     query = query.eq('id', facilityId);
-  } else if (role !== 'MoH') {
+  } else if (role !== 'MoH' && role !== 'FacilityAdmin') {
     // If not MoH or FacilityAdmin, return empty array (or throw error if strict)
     return [];
   }
@@ -293,37 +293,31 @@ export interface AuditLog {
   status: "success" | "failed";
 }
 
+/**
+ * Fetches audit logs from Supabase. RLS handles filtering by role/facility.
+ */
 export async function fetchAuditLogs(role: string, facilityName?: string): Promise<AuditLog[]> {
-    // Mock data from src/pages/Audit.tsx
-    const mockLogs: AuditLog[] = [
-        { id: 1, timestamp: "2024-11-23 14:25:30", user: "admin@moh.kwara", action: "FACILITY_APPROVED", resource: "Baptist Medical Centre", ip: "102.89.23.45", status: "success" },
-        { id: 2, timestamp: "2024-11-23 14:23:15", user: "api_key_abc123", action: "PATIENT_CREATED", resource: "Patient/KW2024001234", ip: "41.203.12.88", status: "success" },
-        { id: 3, timestamp: "2024-11-23 14:20:42", user: "facility_admin@hospital", action: "API_KEY_GENERATED", resource: "hkit_prod_xyz789", ip: "197.210.55.10", status: "success" },
-        { id: 4, timestamp: "2024-11-23 14:18:08", user: "api_key_test456", action: "OBSERVATION_UPDATE", resource: "Observation/obs-12345", ip: "105.112.45.22", status: "failed" },
-        { id: 5, timestamp: "2024-11-23 14:15:33", user: "admin@moh.kwara", action: "CONSENT_REVOKED", resource: "Consent/consent-789", ip: "102.89.23.45", status: "success" },
-        { id: 6, timestamp: "2024-11-23 14:12:51", user: "api_key_prod999", action: "ENCOUNTER_CREATED", resource: "Encounter/enc-54321", ip: "197.255.88.99", status: "success" },
-        // Facility-specific logs for filtering simulation (assuming GH Ilorin is the mock facility)
-        { id: 7, timestamp: "2024-11-23 14:10:00", user: "facility_admin@ghilorin", action: "LOGIN", resource: "General Hospital Ilorin", ip: "192.168.1.1", status: "success" },
-        { id: 8, timestamp: "2024-11-23 14:05:00", user: "api_key_abc123", action: "PATIENT_CREATED", resource: "General Hospital Ilorin", ip: "41.203.12.88", status: "success" },
-    ];
-    
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const { data, error } = await supabase
+        .from('audit_logs')
+        .select('id, timestamp, user_email, action, resource_type, resource_id, ip_address, status')
+        .order('timestamp', { ascending: false })
+        .limit(100); // Limit to 100 for dashboard view
 
-    if (role === "FacilityAdmin" && facilityName) {
-        // Filter logs relevant to the facility (either resource or user related)
-        return mockLogs.filter(log => 
-            log.resource.includes(facilityName) || 
-            log.user.includes(facilityName.toLowerCase().replace(/\s/g, '')) ||
-            log.user.includes("facility_admin@ghilorin") // Specific mock user for GH Ilorin
-        );
+    if (error) {
+        console.error("Error fetching audit logs:", error);
+        throw new Error("Failed to fetch audit logs.");
     }
     
-    if (role === "Developer") {
-        // Filter logs relevant to API keys/integration actions
-        return mockLogs.filter(log => log.user.startsWith("api_key_") || log.action.includes("API_KEY"));
-    }
-
-    return mockLogs; // MoH sees all logs
+    // Map Supabase data to AuditLog interface
+    return data.map(log => ({
+        id: log.id,
+        timestamp: new Date(log.timestamp).toLocaleString(),
+        user: log.user_email || 'System/API',
+        action: log.action || 'N/A',
+        resource: log.resource_type && log.resource_id ? `${log.resource_type}/${log.resource_id}` : log.resource_type || 'N/A',
+        ip: log.ip_address || 'N/A',
+        status: log.status === 'success' ? 'success' : 'failed',
+    }));
 }
 
 export interface FhirEvent {
@@ -336,7 +330,8 @@ export interface FhirEvent {
 }
 
 export async function fetchFhirEvents(): Promise<FhirEvent[]> {
-    // Mock data from src/pages/Interoperability.tsx
+    // Since fhir_resources table is for storage, we mock the event stream for now
+    // until a dedicated event table or real-time subscription is implemented.
     const mockEvents: FhirEvent[] = [
         { id: 1, resource: "Patient", operation: "CREATE", facility: "General Hospital Ilorin", status: "success", timestamp: "2024-11-23 14:23:45" },
         { id: 2, resource: "Observation", operation: "UPDATE", facility: "Baptist Medical Centre", status: "success", timestamp: "2024-11-23 14:23:42" },
@@ -387,7 +382,7 @@ const mockEvents = [
     { id: 5, resource: "Condition", operation: "UPDATE", facility: "Private Clinic Offa", status: "warning", timestamp: "2024-11-23 14:23:30" },
 ];
 
-// --- Consent API Mock ---
+// --- Consent API Functions ---
 
 export interface ConsentRecord {
   patientId: string;
@@ -397,41 +392,96 @@ export interface ConsentRecord {
   status: "active" | "revoked";
 }
 
-let mockConsentRecords: ConsentRecord[] = [
-  { patientId: "KW2024001234", scope: "Full access", grantedTo: "Baptist Medical Centre", expiry: "2025-12-31", status: "active" },
-  { patientId: "KW2024001235", scope: "Lab results only", grantedTo: "Private Clinic Offa", expiry: "2025-06-30", status: "active" },
-  { patientId: "KW2024001236", scope: "Emergency access", grantedTo: "General Hospital Ilorin", expiry: "Never", status: "revoked" },
-];
+/**
+ * Fetches consent records from Supabase. RLS handles filtering by role/facility.
+ */
+export async function fetchConsentRecords(): Promise<ConsentRecord[]> {
+  const { data, error } = await supabase
+    .from('consent_records')
+    .select('patient_id, scope, granted_to, expiry, status, created_at, facility:facilities(name)')
+    .order('created_at', { ascending: false })
+    .limit(50);
 
-export async function fetchConsentRecords(role: string, facilityName?: string): Promise<ConsentRecord[]> {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  if (role === "FacilityAdmin" && facilityName) {
-    // Facility Admin only sees consents granted to their facility
-    return mockConsentRecords.filter(r => r.grantedTo.includes(facilityName));
+  if (error) {
+    console.error("Error fetching consent records:", error);
+    throw new Error("Failed to fetch consent records.");
   }
-
-  return mockConsentRecords; // MoH sees all consents
+  
+  return data.map(record => ({
+    patientId: record.patient_id,
+    scope: record.scope || 'N/A',
+    grantedTo: record.granted_to || 'N/A',
+    expiry: record.expiry || 'N/A',
+    status: record.status === 'active' ? 'active' : 'revoked',
+    // Use facility name from join if available, otherwise default to granted_to
+    grantedTo: record.facility?.name || record.granted_to || 'N/A',
+    expiry: record.expiry ? new Date(record.expiry).toLocaleDateString() : 'N/A',
+  }));
 }
 
 export async function revokeConsent(patientId: string): Promise<ConsentRecord> {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const recordIndex = mockConsentRecords.findIndex(r => r.patientId === patientId);
-  if (recordIndex === -1) {
-    throw new Error("Consent record not found");
-  }
+  const { data, error } = await supabase
+    .from('consent_records')
+    .update({ status: 'revoked' })
+    .eq('patient_id', patientId)
+    .eq('status', 'active') // Only revoke active consents
+    .select('patient_id, scope, granted_to, expiry, status, facility:facilities(name)')
+    .single();
 
-  if (mockConsentRecords[recordIndex].status === 'revoked') {
-    throw new Error("Consent already revoked");
+  if (error) {
+    console.error("Error revoking consent:", error);
+    throw new Error(`Failed to revoke consent: ${error.message}`);
   }
   
-  mockConsentRecords[recordIndex] = {
-    ...mockConsentRecords[recordIndex],
-    status: "revoked",
+  return {
+    patientId: data.patient_id,
+    scope: data.scope || 'N/A',
+    grantedTo: data.facility?.name || data.granted_to || 'N/A',
+    expiry: data.expiry ? new Date(data.expiry).toLocaleDateString() : 'N/A',
+    status: data.status as "active" | "revoked",
   };
-  return mockConsentRecords[recordIndex];
 }
+
+// --- Master Patient Index API Functions ---
+
+export interface MpiRecord {
+  id: string;
+  stateHealthId: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: string;
+  facility: string;
+  verified: boolean;
+}
+
+/**
+ * Fetches MPI records from Supabase. RLS handles filtering by role/facility.
+ */
+export async function fetchMpiRecords(): Promise<MpiRecord[]> {
+  const { data, error } = await supabase
+    .from('master_patient_index')
+    .select('id, state_health_id, first_name, last_name, date_of_birth, gender, primary_facility_id, facility:facilities(name)')
+    .limit(50);
+
+  if (error) {
+    console.error("Error fetching MPI records:", error);
+    throw new Error("Failed to fetch MPI records.");
+  }
+  
+  return data.map(record => ({
+    id: record.id,
+    stateHealthId: record.state_health_id,
+    firstName: record.first_name,
+    lastName: record.last_name,
+    dateOfBirth: record.date_of_birth || 'N/A',
+    gender: record.gender || 'N/A',
+    facility: record.facility?.name || 'N/A',
+    // Mocking verification status for now
+    verified: true, 
+  }));
+}
+
 
 // --- Data Quality Mock ---
 

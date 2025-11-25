@@ -45,6 +45,14 @@ const Audit = () => {
         </div>
       );
     }
+    
+    if (auditLogs.length === 0) {
+        return (
+            <div className="p-4 text-center text-muted-foreground">
+                No audit logs found for your current scope.
+            </div>
+        );
+    }
 
     return (
       <div className="space-y-2">
