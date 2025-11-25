@@ -106,7 +106,7 @@ const ProfileSettings = () => {
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Profile & Account Settings</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Account & Profile Settings</h1>
         <p className="text-muted-foreground">Manage your personal information and security settings.</p>
       </div>
 

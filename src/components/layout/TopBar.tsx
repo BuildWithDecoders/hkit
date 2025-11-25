@@ -24,8 +24,12 @@ export function TopBar() {
     return "Guest";
   };
 
-  const handleNavigateToProfile = () => {
-    navigate("/shared/profile");
+  const handleNavigateToAccount = () => {
+    navigate("/shared/account");
+  };
+  
+  const handleNavigateToSettings = () => {
+    navigate("/shared/settings");
   };
 
   return (
@@ -81,11 +85,11 @@ export function TopBar() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>{user?.name || "User Profile"}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleNavigateToProfile}>
+            <DropdownMenuItem onClick={handleNavigateToAccount}>
               <User className="w-4 h-4 mr-2" />
-              Profile
+              Account
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleNavigateToProfile}>
+            <DropdownMenuItem onClick={handleNavigateToSettings}>
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </DropdownMenuItem>

@@ -13,6 +13,7 @@ import {
   Users,
   Key,
   Clock,
+  Settings, // Import Settings icon
 } from "lucide-react";
 import {
   Sidebar,
@@ -44,6 +45,7 @@ const MoH_MENU: MenuItem[] = [
   { title: "User Management", url: "/moh/users", icon: Users },
   { title: "Audit Logs", url: "/shared/audit", icon: ScrollText },
   { title: "System Health", url: "/moh/health", icon: Activity },
+  { title: "Settings", url: "/shared/settings", icon: Settings }, // Added Settings
 ];
 
 const FACILITY_ADMIN_MENU: MenuItem[] = [
@@ -52,12 +54,14 @@ const FACILITY_ADMIN_MENU: MenuItem[] = [
   { title: "API & Integrations", url: "/shared/developer-portal", icon: Key },
   { title: "User Management", url: "/admin/governance", icon: Users },
   { title: "Facility Audit Logs", url: "/shared/audit", icon: ScrollText },
+  { title: "Settings", url: "/shared/settings", icon: Settings }, // Added Settings
 ];
 
 const DEVELOPER_MENU: MenuItem[] = [
   { title: "Developer Dashboard", url: "/developer/dashboard", icon: LayoutDashboard },
   { title: "Developer Portal", url: "/developer/portal", icon: Code2 },
   { title: "API Logs & Analytics", url: "/shared/audit", icon: ScrollText },
+  { title: "Settings", url: "/shared/settings", icon: Settings }, // Added Settings
 ];
 
 const getMenuItems = (role: UserRole): MenuItem[] => {
