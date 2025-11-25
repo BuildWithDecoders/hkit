@@ -410,12 +410,9 @@ export async function fetchConsentRecords(): Promise<ConsentRecord[]> {
   return data.map(record => ({
     patientId: record.patient_id,
     scope: record.scope || 'N/A',
-    grantedTo: record.granted_to || 'N/A',
-    expiry: record.expiry || 'N/A',
-    status: record.status === 'active' ? 'active' : 'revoked',
-    // Use facility name from join if available, otherwise default to granted_to
     grantedTo: record.facility?.name || record.granted_to || 'N/A',
     expiry: record.expiry ? new Date(record.expiry).toLocaleDateString() : 'N/A',
+    status: record.status === 'active' ? 'active' : 'revoked',
   }));
 }
 
@@ -433,10 +430,14 @@ export async function revokeConsent(patientId: string): Promise<ConsentRecord> {
     throw new Error(`Failed to revoke consent: ${error.message}`);
   }
   
+  // The select statement returns an array of objects for the joined table, 
+  // but since we select 'facility:facilities(name)', it's an object { name: string } or null.
+  const facilityName = Array.isArray(data.facility) ? data.facility[0]?.name : data.facility?.name;
+
   return {
     patientId: data.patient_id,
     scope: data.scope || 'N/A',
-    grantedTo: data.facility?.name || data.granted_to || 'N/A',
+    grantedTo: facilityName || data.granted_to || 'N/A',
     expiry: data.expiry ? new Date(data.expiry).toLocaleDateString() : 'N/A',
     status: data.status as "active" | "revoked",
   };
@@ -469,17 +470,22 @@ export async function fetchMpiRecords(): Promise<MpiRecord[]> {
     throw new Error("Failed to fetch MPI records.");
   }
   
-  return data.map(record => ({
-    id: record.id,
-    stateHealthId: record.state_health_id,
-    firstName: record.first_name,
-    lastName: record.last_name,
-    dateOfBirth: record.date_of_birth || 'N/A',
-    gender: record.gender || 'N/A',
-    facility: record.facility?.name || 'N/A',
-    // Mocking verification status for now
-    verified: true, 
-  }));
+  return data.map(record => {
+    // Handle joined facility data which might be an array or object depending on Supabase version/query
+    const facilityName = Array.isArray(record.facility) ? record.facility[0]?.name : record.facility?.name;
+
+    return {
+      id: record.id,
+      stateHealthId: record.state_health_id,
+      firstName: record.first_name,
+      lastName: record.last_name,
+      dateOfBirth: record.date_of_birth || 'N/A',
+      gender: record.gender || 'N/A',
+      facility: facilityName || 'N/A',
+      // Mocking verification status for now
+      verified: true, 
+    };
+  });
 }
 
 

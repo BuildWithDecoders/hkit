@@ -63,7 +63,6 @@ export function useRejectFacility() {
       toast.error(`Facility ${updatedFacility.name} rejected.`, {
         description: "The facility contact has been notified.",
       });
-    });
     },
     onError: (error) => {
       toast.error("Failed to reject facility.", {
