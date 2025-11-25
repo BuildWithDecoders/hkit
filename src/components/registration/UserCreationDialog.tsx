@@ -34,9 +34,10 @@ interface UserCreationDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   request: RegistrationRequest | null;
+  onSuccess: (password: string, email: string) => void; // New success callback
 }
 
-export function UserCreationDialog({ isOpen, onOpenChange, request }: UserCreationDialogProps) {
+export function UserCreationDialog({ isOpen, onOpenChange, request, onSuccess }: UserCreationDialogProps) {
   const createApprovedUserMutation = useCreateApprovedUser();
   
   const form = useForm<UserCreationFormValues>({
@@ -68,9 +69,9 @@ export function UserCreationDialog({ isOpen, onOpenChange, request }: UserCreati
       name: name,
       role: role,
     }, {
-      onSuccess: () => {
-        // Password display handled by the mutation hook's onSuccess
+      onSuccess: (generatedPassword) => {
         onOpenChange(false);
+        onSuccess(generatedPassword, data.email); // Pass password and email to parent
       },
       // Error handling is also handled by the mutation hook
     });
@@ -88,7 +89,7 @@ export function UserCreationDialog({ isOpen, onOpenChange, request }: UserCreati
             Create {roleLabel} Account
           </DialogTitle>
           <DialogDescription>
-            The system will auto-generate a temporary password and send it to the user's email.
+            Confirm the email address for the new user. A temporary password will be generated and displayed upon approval.
           </DialogDescription>
         </DialogHeader>
         

@@ -106,6 +106,7 @@ interface CreateUserParams {
 export function useCreateApprovedUser() {
   const queryClient = useQueryClient();
   
+  // The mutation now returns the generated password string
   return useMutation<string, Error, CreateUserParams>({
     mutationFn: async (params) => {
         const password = generateRandomPassword(12); // Generate password here
@@ -121,13 +122,13 @@ export function useCreateApprovedUser() {
       queryClient.invalidateQueries({ queryKey: ["registrationRequests"] });
       queryClient.invalidateQueries({ queryKey: ["facilities"] });
       
+      // Success toast is now minimal, the dialog handles the password display
       const roleLabel = variables.requestType === 'facility' ? 'Facility Administrator' : 'Developer';
-      
-      // Display the password to the MoH admin
-      toast.success(`User account created for ${roleLabel}!`, {
-        description: `Temporary Password: ${generatedPassword}. An email has been simulated to ${variables.email}.`,
-        duration: 15000,
+      toast.success(`Account created for ${roleLabel}.`, {
+        description: `Temporary password generated. Please share it with ${variables.email}.`,
       });
+      
+      // The component calling this hook will handle the dialog display using the returned password
     },
     onError: (error) => {
       toast.error("User Creation Failed", {

@@ -10,12 +10,16 @@ import { RegistrationRequest } from "@/api/hkit";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserCreationDialog } from "@/components/registration/UserCreationDialog";
+import { TemporaryPasswordDialog } from "@/components/registration/TemporaryPasswordDialog"; // Import new dialog
 
 const RegistrationRequests = () => {
   const [activeTab, setActiveTab] = useState("pending");
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isUserCreationDialogOpen, setIsUserCreationDialogOpen] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false); // New state for password dialog
   const [selectedRequest, setSelectedRequest] = useState<RegistrationRequest | null>(null);
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
+  const [approvedUserEmail, setApprovedUserEmail] = useState<string | null>(null);
 
   const { data: requests, isLoading, isError } = useRegistrationRequests();
   const rejectMutation = useRejectRequest();
@@ -43,6 +47,12 @@ const RegistrationRequests = () => {
   const handleViewDetails = (request: RegistrationRequest) => {
     setSelectedRequest(request);
     setIsDetailsDialogOpen(true);
+  };
+  
+  const handleUserCreationSuccess = (password: string, email: string) => {
+    setGeneratedPassword(password);
+    setApprovedUserEmail(email);
+    setIsPasswordDialogOpen(true);
   };
 
   const renderRequestCard = (request: RegistrationRequest) => {
@@ -228,11 +238,20 @@ const RegistrationRequests = () => {
         </DialogContent>
       </Dialog>
       
-      {/* User Creation Dialog (Final Approval Step) */}
+      {/* User Creation Dialog (Intermediate Step) */}
       <UserCreationDialog
         isOpen={isUserCreationDialogOpen}
         onOpenChange={setIsUserCreationDialogOpen}
         request={selectedRequest}
+        onSuccess={handleUserCreationSuccess} // Pass the new success handler
+      />
+      
+      {/* Temporary Password Dialog (Final Step) */}
+      <TemporaryPasswordDialog
+        isOpen={isPasswordDialogOpen}
+        onOpenChange={setIsPasswordDialogOpen}
+        password={generatedPassword}
+        email={approvedUserEmail}
       />
     </div>
   );

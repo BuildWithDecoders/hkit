@@ -267,11 +267,8 @@ export async function createApprovedUser({
   }
 
   // 2. Simulate sending the welcome email with the temporary password
+  // NOTE: The client-side hook will handle the success notification and password display.
   console.log(`[EMAIL SIMULATION] Sent welcome email to ${email} with temporary password: ${password}`);
-  toast.info(`Email simulation: Sent temporary password to ${email}.`, {
-    description: `Password: ${password}`,
-    duration: 10000,
-  });
 }
 
 
