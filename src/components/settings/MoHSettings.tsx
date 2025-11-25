@@ -2,13 +2,72 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Settings, Database, Shield, Save } from "lucide-react";
-import { toast } from "sonner";
+import { Database, Shield, Save, Loader2 } from "lucide-react";
+import { useUpdateMoHSystemSettings } from "@/hooks/use-hkit-data";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { MoHSystemSettings } from "@/api/hkit"; // Import MoHSystemSettings type
+
+const systemSettingsSchema = z.object({
+  minCompleteness: z.coerce.number().min(50).max(100, "Must be between 50 and 100"),
+  errorAlertLimit: z.coerce.number().min(1, "Must be at least 1"),
+});
+
+const governanceSettingsSchema = z.object({
+  defaultConsentExpiry: z.coerce.number().min(1, "Must be at least 1 month"),
+});
+
+type SystemFormValues = z.infer<typeof systemSettingsSchema>;
+type GovernanceFormValues = z.infer<typeof governanceSettingsSchema>;
 
 export function MoHSettings() {
-  const handleSaveSystemSettings = () => {
-    toast.success("System settings saved.", { description: "Configuration changes applied." });
+  const updateSystemMutation = useUpdateMoHSystemSettings();
+
+  // Form for Data Quality
+  const systemForm = useForm<SystemFormValues>({
+    resolver: zodResolver(systemSettingsSchema),
+    defaultValues: {
+      minCompleteness: 80,
+      errorAlertLimit: 500,
+    },
+  });
+
+  // Form for Governance
+  const governanceForm = useForm<GovernanceFormValues>({
+    resolver: zodResolver(governanceSettingsSchema),
+    defaultValues: {
+      defaultConsentExpiry: 12,
+    },
+  });
+
+  const handleSaveSystemSettings = async (data: SystemFormValues) => {
+    const governanceData = governanceForm.getValues();
+    // Combine data from both forms to satisfy MoHSystemSettings interface
+    await updateSystemMutation.mutateAsync({
+      ...data,
+      defaultConsentExpiry: governanceData.defaultConsentExpiry,
+    } as MoHSystemSettings);
   };
+  
+  const handleSaveGovernanceSettings = async (data: GovernanceFormValues) => {
+    const systemData = systemForm.getValues();
+    // Combine data from both forms to satisfy MoHSystemSettings interface
+    await updateSystemMutation.mutateAsync({
+      ...systemData,
+      defaultConsentExpiry: data.defaultConsentExpiry,
+    } as MoHSystemSettings);
+  };
+
+  const isSubmitting = updateSystemMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -20,20 +79,46 @@ export function MoHSettings() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="min-completeness">Minimum Completeness Threshold (%)</Label>
-              <Input id="min-completeness" defaultValue="80" className="bg-secondary border-border" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="error-alert-limit">Daily Error Alert Limit</Label>
-              <Input id="error-alert-limit" defaultValue="500" className="bg-secondary border-border" />
-            </div>
-          </div>
-          <Button onClick={handleSaveSystemSettings} className="bg-primary hover:bg-primary/90">
-            <Save className="w-4 h-4 mr-2" />
-            Save Data Quality Settings
-          </Button>
+          <Form {...systemForm}>
+            <form onSubmit={systemForm.handleSubmit(handleSaveSystemSettings)} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={systemForm.control}
+                  name="minCompleteness"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Minimum Completeness Threshold (%)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} className="bg-secondary border-border" disabled={isSubmitting} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={systemForm.control}
+                  name="errorAlertLimit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Daily Error Alert Limit</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} className="bg-secondary border-border" disabled={isSubmitting} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <Button type="submit" className="bg-primary hover:bg-primary/90" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                Save Data Quality Settings
+              </Button>
+            </form>
+          </Form>
         </CardContent>
       </Card>
 
@@ -45,14 +130,31 @@ export function MoHSettings() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="default-consent-expiry">Default Consent Expiry (Months)</Label>
-            <Input id="default-consent-expiry" defaultValue="12" className="bg-secondary border-border" />
-          </div>
-          <Button onClick={handleSaveSystemSettings} variant="outline" className="border-border">
-            <Save className="w-4 h-4 mr-2" />
-            Save Governance Defaults
-          </Button>
+          <Form {...governanceForm}>
+            <form onSubmit={governanceForm.handleSubmit(handleSaveGovernanceSettings)} className="space-y-4">
+              <FormField
+                control={governanceForm.control}
+                name="defaultConsentExpiry"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Default Consent Expiry (Months)</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} className="bg-secondary border-border" disabled={isSubmitting} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" variant="outline" className="border-border" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                Save Governance Defaults
+              </Button>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>

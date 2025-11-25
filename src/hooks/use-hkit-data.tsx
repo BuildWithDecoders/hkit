@@ -9,14 +9,18 @@ import {
   fetchRegistrationRequests,
   rejectRegistrationRequest,
   createApprovedUser,
-  fetchMpiRecords, // Import new MPI function
+  fetchMpiRecords,
+  updateFacilityIntegrationSettings, // Import new function
+  updateMoHSystemSettings, // Import new function
   Facility,
   FacilityStatus,
   AuditLog,
   FhirEvent,
   ConsentRecord,
   RegistrationRequest,
-  MpiRecord, // Import new MPI type
+  MpiRecord,
+  FacilityIntegrationSettings, // Import new type
+  MoHSystemSettings, // Import new type
 } from "@/api/hkit";
 import { toast } from "sonner";
 import { useAuth } from "./use-auth";
@@ -137,6 +141,47 @@ export function useCreateApprovedUser() {
     },
     onError: (error) => {
       toast.error("User Creation Failed", {
+        description: error.message,
+      });
+    },
+  });
+}
+
+
+// --- Settings Hooks (New) ---
+
+export function useUpdateFacilityIntegrationSettings() {
+  const { user } = useAuth();
+  return useMutation<void, Error, FacilityIntegrationSettings>({
+    mutationFn: (settings) => {
+      if (!user?.facilityId) {
+        throw new Error("User is not associated with a facility.");
+      }
+      return updateFacilityIntegrationSettings(user.facilityId, settings);
+    },
+    onSuccess: () => {
+      toast.success("Integration settings saved!", {
+        description: "Your EMR connection details have been updated.",
+      });
+    },
+    onError: (error) => {
+      toast.error("Failed to save settings.", {
+        description: error.message,
+      });
+    },
+  });
+}
+
+export function useUpdateMoHSystemSettings() {
+  return useMutation<void, Error, MoHSystemSettings>({
+    mutationFn: (settings) => updateMoHSystemSettings(settings),
+    onSuccess: () => {
+      toast.success("System settings saved!", {
+        description: "Configuration changes applied successfully.",
+      });
+    },
+    onError: (error) => {
+      toast.error("Failed to save system settings.", {
         description: error.message,
       });
     },

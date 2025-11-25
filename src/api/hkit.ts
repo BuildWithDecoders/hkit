@@ -161,6 +161,52 @@ export async function updateUserProfile(userId: string, firstName: string, lastN
   }
 }
 
+// --- Settings API Functions (New) ---
+
+export interface FacilityIntegrationSettings {
+  emrSystem: string;
+  fhirEndpoint: string;
+}
+
+/**
+ * Updates integration settings for a facility.
+ * NOTE: This currently mocks updating the facility table with new fields.
+ */
+export async function updateFacilityIntegrationSettings(facilityId: number, settings: FacilityIntegrationSettings): Promise<void> {
+  // In a real scenario, we might update a dedicated 'integration_settings' table.
+  // For simplicity, we mock the update here.
+  console.log(`[MOCK API] Updating integration settings for Facility ID ${facilityId}:`, settings);
+  
+  // Simulate a successful update
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // If we were to update the facilities table:
+  // const { error } = await supabase
+  //   .from('facilities')
+  //   .update({ emr_system: settings.emrSystem, fhir_endpoint: settings.fhirEndpoint })
+  //   .eq('id', facilityId);
+  
+  // if (error) throw new Error(error.message);
+}
+
+export interface MoHSystemSettings {
+  minCompleteness: number;
+  errorAlertLimit: number;
+  defaultConsentExpiry: number;
+}
+
+/**
+ * Updates system-wide settings (MoH role).
+ * NOTE: This requires a dedicated 'system_settings' table, which we will mock for now.
+ */
+export async function updateMoHSystemSettings(settings: MoHSystemSettings): Promise<void> {
+  console.log(`[MOCK API] Updating MoH System Settings:`, settings);
+  
+  // Simulate a successful update
+  await new Promise(resolve => setTimeout(resolve, 500));
+}
+
+
 // --- Registration Request Functions ---
 
 export async function submitFacilityRegistration(data: FacilityRegistrationData): Promise<void> {
