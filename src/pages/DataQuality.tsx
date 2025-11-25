@@ -24,6 +24,11 @@ const DataQuality = () => {
     return "Data Quality Center";
   };
 
+  const getDescription = () => {
+    if (role === "FacilityAdmin") return "Monitor your facility's compliance with the Minimum Dataset Standard.";
+    return "Monitor and enforce minimum dataset compliance";
+  };
+
   useEffect(() => {
     document.title = `${getTitle()} | Hkit Portal`;
   }, [role, facilityName]);
