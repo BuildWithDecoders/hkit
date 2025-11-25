@@ -410,7 +410,7 @@ export async function fetchConsentRecords(): Promise<ConsentRecord[]> {
   return data.map(record => ({
     patientId: record.patient_id,
     scope: record.scope || 'N/A',
-    grantedTo: record.facility?.name || record.granted_to || 'N/A',
+    grantedTo: (record.facility as any)?.name || record.granted_to || 'N/A',
     expiry: record.expiry ? new Date(record.expiry).toLocaleDateString() : 'N/A',
     status: record.status === 'active' ? 'active' : 'revoked',
   }));
@@ -432,7 +432,8 @@ export async function revokeConsent(patientId: string): Promise<ConsentRecord> {
   
   // The select statement returns an array of objects for the joined table, 
   // but since we select 'facility:facilities(name)', it's an object { name: string } or null.
-  const facilityName = Array.isArray(data.facility) ? data.facility[0]?.name : data.facility?.name;
+  const facilityData = data.facility as any;
+  const facilityName = Array.isArray(facilityData) ? facilityData[0]?.name : facilityData?.name;
 
   return {
     patientId: data.patient_id,
@@ -472,7 +473,8 @@ export async function fetchMpiRecords(): Promise<MpiRecord[]> {
   
   return data.map(record => {
     // Handle joined facility data which might be an array or object depending on Supabase version/query
-    const facilityName = Array.isArray(record.facility) ? record.facility[0]?.name : record.facility?.name;
+    const facilityData = record.facility as any;
+    const facilityName = Array.isArray(facilityData) ? facilityData[0]?.name : facilityData?.name;
 
     return {
       id: record.id,
