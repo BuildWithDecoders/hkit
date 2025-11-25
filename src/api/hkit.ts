@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { UserRole } from "@/hooks/use-auth";
 
 export type FacilityStatus = "verified" | "pending" | "rejected";
 
@@ -44,11 +45,20 @@ export interface DeveloperRegistrationData {
 
 // --- Supabase API Functions ---
 
-export async function fetchFacilities(): Promise<Facility[]> {
-  // Fetch all facilities (MoH policy allows authenticated users to read all)
-  const { data, error } = await supabase
+export async function fetchFacilities(role: UserRole, facilityId?: number): Promise<Facility[]> {
+  let query = supabase
     .from('facilities')
     .select('*');
+
+  if (role === 'FacilityAdmin' && facilityId) {
+    // RLS should handle security, but we filter here for efficiency and clarity
+    query = query.eq('id', facilityId);
+  } else if (role !== 'MoH') {
+    // If not MoH or FacilityAdmin, return empty array (or throw error if strict)
+    return [];
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching facilities:", error);

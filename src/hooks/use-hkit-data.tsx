@@ -23,9 +23,12 @@ import { generateRandomPassword } from "@/lib/utils"; // Import password generat
 // --- Facility Hooks ---
 
 export function useFacilities() {
+  const { role, user } = useAuth();
+  const facilityId = user?.facilityId;
+  
   return useQuery<Facility[]>({
-    queryKey: ["facilities"],
-    queryFn: fetchFacilities,
+    queryKey: ["facilities", role, facilityId],
+    queryFn: () => fetchFacilities(role, facilityId),
   });
 }
 
