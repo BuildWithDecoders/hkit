@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Code2, Clock, CheckCircle2, XCircle, Loader2, AlertTriangle, Eye } from "lucide-react";
 import { useRegistrationRequests, useRejectRequest } from "@/hooks/use-hkit-data";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RegistrationRequest } from "@/api/hkit";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -23,6 +23,10 @@ const RegistrationRequests = () => {
 
   const { data: requests, isLoading, isError } = useRegistrationRequests();
   const rejectMutation = useRejectRequest();
+
+  useEffect(() => {
+    document.title = "Registration Requests | Hkit Portal";
+  }, []);
 
   const filteredRequests = useMemo(() => {
     if (!requests) return [];

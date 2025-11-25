@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, User, Plus, Settings, Trash2, Edit } from "lucide-react";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 const mockUsers = [
   { id: 1, name: "Dr. Amina Bello", role: "MoH Administrator", email: "amina.bello@moh.kwara.ng", status: "Active" },
@@ -12,6 +13,10 @@ const mockUsers = [
 ];
 
 const UserManagement = () => {
+  useEffect(() => {
+    document.title = "User & Role Management | Hkit Portal";
+  }, []);
+
   const handleAddUser = () => {
     toast.info("Action: Opening Add New User form (Mock Action)");
   };

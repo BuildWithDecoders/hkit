@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Copy, Key, Plus, Book, Code2, Webhook } from "lucide-react";
 import { toast } from "sonner";
 import { SandboxConsole } from "@/components/developer/SandboxConsole";
+import { useEffect } from "react";
 
 const apiKeys = [
   { id: 1, name: "Production Key - EMR Integration", key: "hkit_prod_abc123...", created: "2024-11-01", lastUsed: "2 min ago", status: "active" },
@@ -45,6 +46,10 @@ const samplePayload = `{
 }`;
 
 const Developer = () => {
+  useEffect(() => {
+    document.title = "Developer Portal | Hkit Portal";
+  }, []);
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard");

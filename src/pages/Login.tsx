@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { LogIn, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
@@ -13,6 +13,10 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    document.title = "Sign In | Hkit Portal";
+  }, []);
 
   // If already authenticated, the useAuth hook handles redirection.
   // We only need to show a loading state here if the session is being checked.

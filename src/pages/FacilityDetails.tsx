@@ -24,6 +24,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useEffect } from "react";
 
 type FacilityStatus = "verified" | "pending" | "rejected";
 
@@ -72,6 +73,10 @@ const FacilityDetails = () => {
   // In a real app, we would fetch data based on 'id'.
   // For now, we use mock data and assume ID 1 is requested.
   const facility = mockFacilityDetails; 
+
+  useEffect(() => {
+    document.title = `${facility?.name || 'Facility Details'} | Hkit Portal`;
+  }, [facility?.name]);
 
   if (!facility) {
     return (

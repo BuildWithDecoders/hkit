@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuditLogs } from "@/hooks/use-hkit-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
+import { useEffect } from "react";
 
 const Audit = () => {
   const { data: auditLogs, isLoading, isError } = useAuditLogs();
@@ -23,6 +24,10 @@ const Audit = () => {
     if (role === "Developer") return "Detailed log of API calls and key management actions.";
     return "Complete system activity and accountability trail";
   };
+
+  useEffect(() => {
+    document.title = `${getTitle()} | Hkit Portal`;
+  }, [role, user?.facilityName, user?.name]);
 
   const renderAuditList = () => {
     if (isLoading) {

@@ -8,6 +8,7 @@ import { useConsentRecords, useRevokeConsent, useMpiRecords } from "@/hooks/use-
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 // Mock data for Facility Admin User Management (remains local mock for now)
 const facilityUsers = [
@@ -31,6 +32,10 @@ const Governance = () => {
     if (role === "FacilityAdmin") return "Manage local user access and patient consent records for your facility.";
     return "Manage patient identities and data-sharing permissions";
   };
+
+  useEffect(() => {
+    document.title = `${getTitle()} | Hkit Portal`;
+  }, [role, user?.facilityName]);
 
   const handleRevoke = (patientId: string) => {
     revokeMutation.mutate(patientId);

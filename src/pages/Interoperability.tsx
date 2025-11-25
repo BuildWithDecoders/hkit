@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2, XCircle, AlertTriangle, RefreshCw, Eye, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useFhirEvents, useCommandCenterMetrics } from "@/hooks/use-hkit-data";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageInspectorDialog } from "@/components/interoperability/MessageInspectorDialog";
 import { getMockMessageDetails, FhirEvent } from "@/api/hkit";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,6 +24,10 @@ const Interoperability = () => {
   
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
+
+  useEffect(() => {
+    document.title = "Interoperability Monitor | Hkit Portal";
+  }, []);
 
   const handleViewDetails = (event: FhirEvent) => {
     // Use the mock details function which simulates fetching details based on ID

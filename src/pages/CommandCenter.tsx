@@ -14,12 +14,17 @@ import {
 } from "recharts";
 import { useCommandCenterMetrics, useLgaDistribution, useEventStreamData, useLiveErrorFeed } from "@/hooks/use-hkit-data";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect } from "react";
 
 const CommandCenter = () => {
   const { data: metrics, isLoading: isLoadingMetrics, isError: isErrorMetrics } = useCommandCenterMetrics();
   const { data: facilityData, isLoading: isLoadingLga, isError: isErrorLga } = useLgaDistribution();
   const { data: eventData, isLoading: isLoadingEvents, isError: isErrorEvents } = useEventStreamData();
   const { data: errorLogs, isLoading: isLoadingErrors, isError: isErrorErrors } = useLiveErrorFeed();
+
+  useEffect(() => {
+    document.title = "Command Center | Hkit Portal";
+  }, []);
 
   const renderMetricCard = (title: string, value: string | number, icon: LucideIcon, change?: string, changeType?: "positive" | "negative" | "neutral") => {
     if (isLoadingMetrics) {

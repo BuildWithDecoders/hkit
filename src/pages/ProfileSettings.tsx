@@ -31,6 +31,10 @@ const ProfileSettings = () => {
   const { user, role, isLoading } = useAuth();
   const updateProfileMutation = useUpdateProfile();
 
+  useEffect(() => {
+    document.title = "Account & Profile Settings | Hkit Portal";
+  }, []);
+
   const [currentFirstName, currentLastName] = user?.name?.split(/\s+(.*)/s) || ['', ''];
 
   const form = useForm<ProfileFormValues>({

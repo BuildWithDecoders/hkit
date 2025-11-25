@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Code2, Key, Network, Activity, TrendingUp } from "lucide-react";
@@ -16,6 +16,10 @@ const apiUsageData = [
 const DeveloperDashboard = () => {
   const { user } = useAuth();
   const userName = user?.name || "Developer";
+
+  useEffect(() => {
+    document.title = `${userName}'s Developer Dashboard | Hkit Portal`;
+  }, [userName]);
 
   return (
     <div className="p-6 space-y-6">

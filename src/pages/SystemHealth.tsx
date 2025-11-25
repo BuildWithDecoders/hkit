@@ -12,6 +12,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useEffect } from "react";
 
 const latencyData = [
   { time: "00:00", api: 45, db: 12 },
@@ -34,6 +35,10 @@ const throughputData = [
 ];
 
 const SystemHealth = () => {
+  useEffect(() => {
+    document.title = "System Health & Observability | Hkit Portal";
+  }, []);
+
   return (
     <div className="p-6 space-y-6">
       <div>

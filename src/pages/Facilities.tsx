@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Loader2, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FacilityCardList } from "@/components/facilities/FacilityCardList";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useFacilities, useApproveFacility, useRejectFacility } from "@/hooks/use-hkit-data";
 import { Facility } from "@/api/hkit";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,6 +16,10 @@ const Facilities = () => {
   const { data: facilities, isLoading, isError } = useFacilities();
   const approveMutation = useApproveFacility();
   const rejectMutation = useRejectFacility();
+
+  useEffect(() => {
+    document.title = "Facility Registry | Hkit Portal";
+  }, []);
 
   const handleApprove = (id: number, name: string) => {
     approveMutation.mutate(id);

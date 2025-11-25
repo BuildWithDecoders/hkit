@@ -1,9 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ShieldOff } from "lucide-react";
+import { useEffect } from "react";
 
 const Unauthorized = () => {
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    document.title = "Access Denied | Hkit Portal";
+  }, []);
+  
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-center">
       <ShieldOff className="w-16 h-16 text-destructive mb-6" />

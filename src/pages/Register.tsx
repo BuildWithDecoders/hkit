@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Code2 } from "lucide-react";
@@ -7,6 +7,10 @@ import { DeveloperRegistrationForm } from "@/components/registration/DeveloperRe
 import { Link } from "react-router-dom";
 
 const Register = () => {
+  useEffect(() => {
+    document.title = "Register Organization | Hkit Portal";
+  }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary/30 p-4">
       <Card className="w-full max-w-3xl border-border bg-card/80 backdrop-blur-sm animate-fade-in">

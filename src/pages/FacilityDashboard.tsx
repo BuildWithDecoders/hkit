@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { CheckCircle2, AlertCircle, Database, Activity, TrendingUp } from "lucide-react";
@@ -17,6 +17,10 @@ const activityData = [
 const FacilityDashboard = () => {
   const { user } = useAuth();
   const facilityName = user?.facilityName || "Your Facility";
+
+  useEffect(() => {
+    document.title = `${facilityName} Dashboard | Hkit Portal`;
+  }, [facilityName]);
 
   return (
     <div className="p-6 space-y-6">

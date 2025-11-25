@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { MoHSettings } from "@/components/settings/MoHSettings";
 import { FacilitySettings } from "@/components/settings/FacilitySettings";
@@ -8,6 +8,10 @@ import { AlertTriangle, Settings as SettingsIcon } from "lucide-react";
 
 const Settings = () => {
   const { role, user } = useAuth();
+
+  useEffect(() => {
+    document.title = "System Settings | Hkit Portal";
+  }, []);
 
   const renderSettingsContent = () => {
     switch (role) {

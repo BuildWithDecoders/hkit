@@ -7,6 +7,7 @@ import { DataQualityHeatmap } from "@/components/data-quality/DataQualityHeatmap
 import { useAuth } from "@/hooks/use-auth";
 import { useFacilityScores, useDataQualityHeatmap, useCompletenessTrend, useErrorDistribution } from "@/hooks/use-hkit-data";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect } from "react";
 
 const DataQuality = () => {
   const { role, user } = useAuth();
@@ -23,10 +24,9 @@ const DataQuality = () => {
     return "Data Quality Center";
   };
 
-  const getDescription = () => {
-    if (role === "FacilityAdmin") return "Monitor your facility's compliance with the Minimum Dataset Standard.";
-    return "Monitor and enforce minimum dataset compliance";
-  };
+  useEffect(() => {
+    document.title = `${getTitle()} | Hkit Portal`;
+  }, [role, facilityName]);
 
   // Calculate overall metrics based on fetched data
   const overallCompleteness = facilityScores?.length 
