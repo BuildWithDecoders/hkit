@@ -694,7 +694,7 @@ export async function fetchMpiRecords(): Promise<MpiRecord[]> {
 }
 
 
-// --- Data Quality API Functions (New) ---
+// --- Data Quality API Functions ---
 
 export interface FacilityScore {
   name: string;
@@ -703,15 +703,6 @@ export interface FacilityScore {
   change: string;
 }
 
-export const mockFacilityScores: FacilityScore[] = [
-  { name: "General Hospital Ilorin", score: 95, trend: "up", change: "+3%" },
-  { name: "Baptist Medical Centre", score: 92, trend: "up", change: "+1%" },
-  { name: "Sobi Specialist Hospital", score: 88, trend: "down", change: "-2%" },
-  { name: "Private Clinic Offa", score: 85, trend: "up", change: "+5%" },
-  { name: "Community Health Centre", score: 78, trend: "down", change: "-4%" },
-  { name: "Maternity Hospital", score: 72, trend: "up", change: "+2%" },
-];
-
 export interface HeatmapRow {
   facility: string;
   Patient: number;
@@ -719,13 +710,6 @@ export interface HeatmapRow {
   Observation: number;
   Medication: number;
 }
-
-export const mockHeatmapData: HeatmapRow[] = [
-  { facility: "GH Ilorin", Patient: 98, Encounter: 95, Observation: 92, Medication: 90 },
-  { facility: "Baptist Medical", Patient: 95, Encounter: 90, Observation: 88, Medication: 85 },
-  { facility: "Sobi Hospital", Patient: 85, Encounter: 88, Observation: 91, Medication: 82 },
-  { facility: "Private Clinic", Patient: 75, Encounter: 70, Observation: 78, Medication: 65 },
-];
 
 export interface CompletenessTrend {
   day: string;
@@ -742,23 +726,48 @@ export interface ErrorDistribution {
  * Fetches data quality scores for all facilities (MoH) or a specific facility (FacilityAdmin).
  */
 export async function fetchFacilityScores(role: UserRole, facilityName?: string): Promise<FacilityScore[]> {
-  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+  let query = supabase
+    .from('facilities')
+    .select('name, compliance, status')
+    .eq('status', 'verified'); // Only show verified facilities for scoring
+
   if (role === 'FacilityAdmin' && facilityName) {
-    return mockFacilityScores.filter(f => f.name === facilityName);
+    query = query.eq('name', facilityName);
+  } else if (role !== 'MoH') {
+    return [];
   }
-  return mockFacilityScores;
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Error fetching facility scores:", error);
+    throw new Error("Failed to fetch facility scores.");
+  }
+  
+  // NOTE: Trend and change are still mocked as they require historical data
+  return data.map(f => ({
+    name: f.name,
+    score: f.compliance || 0,
+    trend: f.compliance > 80 ? "up" : "down", // Simple mock trend logic
+    change: f.compliance > 80 ? "+1%" : "-1%", // Simple mock change logic
+  }));
 }
 
 /**
- * Fetches data quality heatmap data (MoH only).
+ * Fetches data quality heatmap data (MoH only). (MOCK)
  */
 export async function fetchDataQualityHeatmap(): Promise<HeatmapRow[]> {
   await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-  return mockHeatmapData;
+  return [
+    { facility: "GH Ilorin", Patient: 98, Encounter: 95, Observation: 92, Medication: 90 },
+    { facility: "Baptist Medical", Patient: 95, Encounter: 90, Observation: 88, Medication: 85 },
+    { facility: "Sobi Hospital", Patient: 85, Encounter: 88, Observation: 91, Medication: 82 },
+    { facility: "Private Clinic", Patient: 75, Encounter: 70, Observation: 78, Medication: 65 },
+  ];
 }
 
 /**
- * Fetches completeness trend data.
+ * Fetches completeness trend data. (MOCK)
  */
 export async function fetchCompletenessTrend(facilityName?: string): Promise<CompletenessTrend[]> {
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -775,7 +784,7 @@ export async function fetchCompletenessTrend(facilityName?: string): Promise<Com
 }
 
 /**
- * Fetches error distribution data.
+ * Fetches error distribution data. (MOCK)
  */
 export async function fetchErrorDistribution(facilityName?: string): Promise<ErrorDistribution[]> {
     await new Promise(resolve => setTimeout(resolve, 500));
