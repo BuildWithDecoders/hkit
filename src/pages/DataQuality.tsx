@@ -5,7 +5,13 @@ import { CompletenessTrendChart } from "@/components/data-quality/CompletenessTr
 import { ErrorDistributionChart } from "@/components/data-quality/ErrorDistributionChart";
 import { DataQualityHeatmap } from "@/components/data-quality/DataQualityHeatmap";
 import { useAuth } from "@/hooks/use-auth";
-import { useFacilityScores, useDataQualityHeatmap, useCompletenessTrend, useErrorDistribution } from "@/hooks/use-hkit-data";
+import { 
+  useFacilityScores, 
+  useDataQualityHeatmap, 
+  useCompletenessTrend, 
+  useErrorDistribution,
+  useValidationErrorsCount, // Import new hook
+} from "@/hooks/use-hkit-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect } from "react";
 
@@ -18,6 +24,7 @@ const DataQuality = () => {
   const { data: heatmapData, isLoading: isLoadingHeatmap, isError: isErrorHeatmap } = useDataQualityHeatmap();
   const { data: trendData, isLoading: isLoadingTrend } = useCompletenessTrend();
   const { data: errorDistData, isLoading: isLoadingErrorDist } = useErrorDistribution();
+  const { data: validationErrorsCount, isLoading: isLoadingErrorsCount } = useValidationErrorsCount(); // Use new hook
 
   const getTitle = () => {
     if (role === "FacilityAdmin") return `${facilityName || 'Your Facility'} Data Quality Score`;
@@ -38,11 +45,10 @@ const DataQuality = () => {
     ? (facilityScores.reduce((sum, f) => sum + f.score, 0) / facilityScores.length).toFixed(1)
     : "N/A";
 
-  // Mocking validation errors and MDS compliance based on the first score if FacilityAdmin
+  // Calculate facilities meeting MDS
   const totalFacilities = facilityScores?.length || 0;
   const facilitiesMeetingMDS = facilityScores?.filter(f => f.score >= 80).length || 0;
   
-  const validationErrors = role === "FacilityAdmin" ? "12" : "342"; // Still mocked until we integrate with audit logs for error counts
   const complianceRate = totalFacilities > 0 
     ? `${((facilitiesMeetingMDS / totalFacilities) * 100).toFixed(1)}% compliance rate`
     : "N/A";
@@ -132,19 +138,25 @@ const DataQuality = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-6 border-border">
           <p className="text-sm text-muted-foreground mb-2">Overall Completeness</p>
-          <p className="text-3xl font-bold text-foreground mb-4">{isLoadingScores ? <Loader2 className="w-6 h-6 animate-spin" /> : `${overallCompleteness}%`}</p>
+          <p className="text-3xl font-bold text-foreground mb-4">
+            {isLoadingScores ? <Loader2 className="w-6 h-6 animate-spin" /> : `${overallCompleteness}%`}
+          </p>
           <div className="h-2 bg-secondary rounded-full overflow-hidden">
             <div className="h-full bg-primary rounded-full" style={{ width: `${parseFloat(overallCompleteness as string) || 0}%` }} />
           </div>
         </Card>
         <Card className="p-6 border-border">
           <p className="text-sm text-muted-foreground mb-2">Validation Errors (24h)</p>
-          <p className="text-3xl font-bold text-destructive mb-2">{validationErrors}</p>
-          <p className="text-sm text-muted-foreground">-15% from yesterday</p>
+          <p className="text-3xl font-bold text-destructive mb-2">
+            {isLoadingErrorsCount ? <Loader2 className="w-6 h-6 animate-spin" /> : validationErrorsCount?.toLocaleString() || 0}
+          </p>
+          <p className="text-sm text-muted-foreground">-15% from yesterday (Mock)</p>
         </Card>
         <Card className="p-6 border-border">
           <p className="text-sm text-muted-foreground mb-2">Facilities Meeting MDS</p>
-          <p className="text-3xl font-bold text-success mb-2">{isLoadingScores ? <Loader2 className="w-6 h-6 animate-spin" /> : facilitiesMeetingMDSLabel}</p>
+          <p className="text-3xl font-bold text-success mb-2">
+            {isLoadingScores ? <Loader2 className="w-6 h-6 animate-spin" /> : facilitiesMeetingMDSLabel}
+          </p>
           <p className="text-sm text-muted-foreground">{complianceRate}</p>
         </Card>
       </div>

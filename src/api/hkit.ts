@@ -796,3 +796,25 @@ export async function fetchErrorDistribution(facilityName?: string): Promise<Err
         { name: "FHIR Structure Violations", value: 150, color: "hsl(var(--chart-4))" },
     ];
 }
+
+/**
+ * Fetches the count of failed audit logs (validation errors) in the last 24 hours.
+ * RLS ensures Facility Admins only see their facility's errors.
+ */
+export async function fetchValidationErrorsCount(facilityName?: string): Promise<number> {
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  
+  // RLS handles filtering by user/facility ID. We only need to filter by time and status.
+  const { count, error } = await supabase
+    .from('audit_logs')
+    .select('id', { count: 'exact', head: true })
+    .gte('timestamp', twentyFourHoursAgo)
+    .eq('status', 'failed');
+
+  if (error) {
+    console.error("Error fetching validation error count:", error);
+    throw new Error(`Failed to fetch validation error count: ${error.message}`);
+  }
+  
+  return count || 0;
+}

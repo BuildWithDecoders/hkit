@@ -15,10 +15,11 @@ import {
   fetchCommandCenterMetrics,
   fetchLgaDistribution,
   fetchEventStreamData,
-  fetchFacilityScores, // New import
-  fetchDataQualityHeatmap, // New import
-  fetchCompletenessTrend, // New import
-  fetchErrorDistribution, // New import
+  fetchFacilityScores,
+  fetchDataQualityHeatmap,
+  fetchCompletenessTrend,
+  fetchErrorDistribution,
+  fetchValidationErrorsCount, // New import
   Facility,
   FacilityStatus,
   AuditLog,
@@ -31,10 +32,10 @@ import {
   CommandCenterMetrics,
   LgaDistribution,
   EventStreamData,
-  FacilityScore, // New type import
-  HeatmapRow, // New type import
-  CompletenessTrend, // New type import
-  ErrorDistribution, // New type import
+  FacilityScore,
+  HeatmapRow,
+  CompletenessTrend,
+  ErrorDistribution,
 } from "@/api/hkit";
 import { toast } from "sonner";
 import { useAuth } from "./use-auth";
@@ -276,6 +277,16 @@ export function useErrorDistribution() {
     return useQuery<ErrorDistribution[]>({
         queryKey: ["errorDistribution", facilityName],
         queryFn: () => fetchErrorDistribution(facilityName),
+    });
+}
+
+export function useValidationErrorsCount() {
+    const { user } = useAuth();
+    const facilityName = user?.facilityName;
+    
+    return useQuery<number>({
+        queryKey: ["validationErrorsCount", facilityName],
+        queryFn: () => fetchValidationErrorsCount(facilityName),
     });
 }
 
