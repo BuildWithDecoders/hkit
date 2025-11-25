@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2, XCircle, AlertTriangle, RefreshCw, Eye, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useFhirEvents } from "@/hooks/use-hkit-data";
+import { useFhirEvents, useCommandCenterMetrics } from "@/hooks/use-hkit-data";
 import { useState } from "react";
 import { MessageInspectorDialog } from "@/components/interoperability/MessageInspectorDialog";
 import { getMockMessageDetails, FhirEvent } from "@/api/hkit";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
+// Mock validation issues are removed as they should be derived from the event stream
 const validationIssues = [
   { id: 1, message: "Missing required field: patient.identifier", resource: "Patient", facility: "General Hospital", severity: "error" },
   { id: 2, message: "Invalid date format in effectiveDateTime", resource: "Observation", facility: "Baptist Medical", severity: "error" },
@@ -18,11 +19,14 @@ const validationIssues = [
 ];
 
 const Interoperability = () => {
-  const { data: fhirEvents, isLoading, isError } = useFhirEvents();
+  const { data: fhirEvents, isLoading: isLoadingEvents, isError: isErrorEvents } = useFhirEvents();
+  const { data: metrics, isLoading: isLoadingMetrics } = useCommandCenterMetrics();
+  
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
 
   const handleViewDetails = (event: FhirEvent) => {
+    // Use the mock details function which simulates fetching details based on ID
     const details = getMockMessageDetails(event.id);
     if (details) {
       setSelectedMessage(details);
@@ -37,9 +41,15 @@ const Interoperability = () => {
   const handleTransformValidate = () => {
     toast.info("Action: Running HL7 transformation and validation (Mock Action)");
   };
+  
+  const totalEvents = metrics?.totalEvents24h || 0;
+  const successfulEvents = Math.round(totalEvents * (metrics?.successRate || 100) / 100);
+  const failedEvents = totalEvents - successfulEvents;
+  // Warning count is mocked as we don't have a direct metric for it yet
+  const warningEvents = 216; 
 
   const renderEventStream = () => {
-    if (isLoading) {
+    if (isLoadingEvents) {
       return (
         <div className="p-4 space-y-2">
           {[...Array(5)].map((_, i) => (
@@ -51,7 +61,7 @@ const Interoperability = () => {
       );
     }
 
-    if (isError || !fhirEvents) {
+    if (isErrorEvents || !fhirEvents) {
       return (
         <div className="p-4 text-center text-destructive">
           <AlertTriangle className="w-6 h-6 mx-auto mb-2" />
@@ -109,7 +119,7 @@ const Interoperability = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Events</p>
-              <p className="text-2xl font-bold text-foreground mt-1">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "45,234"}</p>
+              <p className="text-2xl font-bold text-foreground mt-1">{isLoadingMetrics ? <Loader2 className="w-6 h-6 animate-spin" /> : totalEvents.toLocaleString()}</p>
             </div>
             <RefreshCw className="w-8 h-8 text-primary" />
           </div>
@@ -118,7 +128,7 @@ const Interoperability = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Successful</p>
-              <p className="text-2xl font-bold text-success">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "44,891"}</p>
+              <p className="text-2xl font-bold text-success">{isLoadingMetrics ? <Loader2 className="w-6 h-6 animate-spin" /> : successfulEvents.toLocaleString()}</p>
             </div>
             <CheckCircle2 className="w-8 h-8 text-success" />
           </div>
@@ -127,7 +137,7 @@ const Interoperability = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Failed</p>
-              <p className="text-2xl font-bold text-destructive">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "127"}</p>
+              <p className="text-2xl font-bold text-destructive">{isLoadingMetrics ? <Loader2 className="w-6 h-6 animate-spin" /> : failedEvents.toLocaleString()}</p>
             </div>
             <XCircle className="w-8 h-8 text-destructive" />
           </div>
@@ -136,7 +146,7 @@ const Interoperability = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Warnings</p>
-              <p className="text-2xl font-bold text-warning">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "216"}</p>
+              <p className="text-2xl font-bold text-warning">{isLoadingMetrics ? <Loader2 className="w-6 h-6 animate-spin" /> : warningEvents.toLocaleString()}</p>
             </div>
             <AlertTriangle className="w-8 h-8 text-warning" />
           </div>

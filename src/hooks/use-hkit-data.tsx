@@ -10,8 +10,11 @@ import {
   rejectRegistrationRequest,
   createApprovedUser,
   fetchMpiRecords,
-  updateFacilityIntegrationSettings, // Import new function
-  updateMoHSystemSettings, // Import new function
+  updateFacilityIntegrationSettings,
+  updateMoHSystemSettings,
+  fetchCommandCenterMetrics, // Import new function
+  fetchLgaDistribution, // Import new function
+  fetchEventStreamData, // Import new function
   Facility,
   FacilityStatus,
   AuditLog,
@@ -19,12 +22,15 @@ import {
   ConsentRecord,
   RegistrationRequest,
   MpiRecord,
-  FacilityIntegrationSettings, // Import new type
-  MoHSystemSettings, // Import new type
+  FacilityIntegrationSettings,
+  MoHSystemSettings,
+  CommandCenterMetrics, // Import new type
+  LgaDistribution, // Import new type
+  EventStreamData, // Import new type
 } from "@/api/hkit";
 import { toast } from "sonner";
 import { useAuth } from "./use-auth";
-import { generateRandomPassword } from "@/lib/utils"; // Import password generator
+import { generateRandomPassword } from "@/lib/utils";
 
 // --- Facility Hooks ---
 
@@ -148,7 +154,7 @@ export function useCreateApprovedUser() {
 }
 
 
-// --- Settings Hooks (New) ---
+// --- Settings Hooks ---
 
 export function useUpdateFacilityIntegrationSettings() {
   const { user } = useAuth();
@@ -185,6 +191,40 @@ export function useUpdateMoHSystemSettings() {
         description: error.message,
       });
     },
+  });
+}
+
+
+// --- Command Center Hooks (New) ---
+
+export function useCommandCenterMetrics() {
+  return useQuery<CommandCenterMetrics>({
+    queryKey: ["commandCenterMetrics"],
+    queryFn: fetchCommandCenterMetrics,
+  });
+}
+
+export function useLgaDistribution() {
+  return useQuery<LgaDistribution[]>({
+    queryKey: ["lgaDistribution"],
+    queryFn: fetchLgaDistribution,
+  });
+}
+
+export function useEventStreamData() {
+  return useQuery<EventStreamData[]>({
+    queryKey: ["eventStreamData"],
+    queryFn: fetchEventStreamData,
+  });
+}
+
+export function useLiveErrorFeed() {
+  const { role, user } = useAuth();
+  const facilityName = user?.facilityName;
+  
+  return useQuery<AuditLog[]>({
+    queryKey: ["liveErrorFeed", role, facilityName],
+    queryFn: () => fetchAuditLogs(role || "Guest", facilityName, 'failed'),
   });
 }
 

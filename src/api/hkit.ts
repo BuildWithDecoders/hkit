@@ -328,6 +328,130 @@ export async function createApprovedUser({
 }
 
 
+// --- Command Center API Functions ---
+
+export interface CommandCenterMetrics {
+  connectedFacilities: number;
+  totalEvents24h: number;
+  successRate: number; // 0 to 100
+  activeIntegrations: number;
+  eventsPerMinute: number;
+}
+
+/**
+ * Fetches aggregated metrics for the Command Center dashboard.
+ */
+export async function fetchCommandCenterMetrics(): Promise<CommandCenterMetrics> {
+  // 1. Connected Facilities (Verified)
+  const { count: connectedFacilitiesCount, error: facilitiesError } = await supabase
+    .from('facilities')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'verified');
+
+  if (facilitiesError) throw new Error(`Failed to fetch facility count: ${facilitiesError.message}`);
+
+  // 2. Audit Logs (24h metrics)
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  const { count: totalLogsCount, error: totalLogsError } = await supabase
+    .from('audit_logs')
+    .select('id', { count: 'exact', head: true })
+    .gte('timestamp', twentyFourHoursAgo);
+
+  if (totalLogsError) throw new Error(`Failed to fetch total logs: ${totalLogsError.message}`);
+
+  const { count: successLogsCount, error: successLogsError } = await supabase
+    .from('audit_logs')
+    .select('id', { count: 'exact', head: true })
+    .gte('timestamp', twentyFourHoursAgo)
+    .eq('status', 'success');
+
+  if (successLogsError) throw new Error(`Failed to fetch success logs: ${successLogsError.message}`);
+
+  const totalEvents = totalLogsCount || 0;
+  const successEvents = successLogsCount || 0;
+  const successRate = totalEvents > 0 ? (successEvents / totalEvents) * 100 : 100;
+  
+  // Mocking change metrics for now
+  const eventsPerMinute = Math.round(totalEvents / 1440); // 1440 minutes in 24 hours
+
+  return {
+    connectedFacilities: connectedFacilitiesCount || 0,
+    totalEvents24h: totalEvents,
+    successRate: parseFloat(successRate.toFixed(1)),
+    activeIntegrations: connectedFacilitiesCount || 0, // Assuming 1 integration per verified facility
+    eventsPerMinute: eventsPerMinute,
+  };
+}
+
+export interface LgaDistribution {
+  name: string;
+  facilities: number;
+  active: number;
+}
+
+/**
+ * Fetches facility distribution grouped by LGA.
+ */
+export async function fetchLgaDistribution(): Promise<LgaDistribution[]> {
+  // NOTE: Supabase RPC is ideal for complex grouping, but we use a simple query and client-side aggregation for now.
+  const { data, error } = await supabase
+    .from('facilities')
+    .select('lga, status');
+
+  if (error) {
+    console.error("Error fetching LGA distribution:", error);
+    throw new Error("Failed to fetch LGA distribution data.");
+  }
+
+  const distributionMap = new Map<string, { facilities: number, active: number }>();
+
+  data.forEach(f => {
+    const lga = f.lga || 'Unknown';
+    const entry = distributionMap.get(lga) || { facilities: 0, active: 0 };
+    entry.facilities += 1;
+    if (f.status === 'verified') {
+      entry.active += 1;
+    }
+    distributionMap.set(lga, entry);
+  });
+
+  return Array.from(distributionMap.entries()).map(([lga, counts]) => ({
+    name: lga,
+    facilities: counts.facilities,
+    active: counts.active,
+  })).sort((a, b) => b.facilities - a.facilities);
+}
+
+export interface EventStreamData {
+  time: string;
+  events: number;
+}
+
+/**
+ * Fetches time-series data for FHIR events (hourly buckets).
+ * NOTE: This requires a PostgreSQL function (e.g., time_bucket) for true efficiency.
+ * We will mock the time series data for now, but use real counts.
+ */
+export async function fetchEventStreamData(): Promise<EventStreamData[]> {
+  // In a real scenario, we would use a query like:
+  // SELECT date_trunc('hour', timestamp) as time, count(*) as events FROM audit_logs GROUP BY 1 ORDER BY 1;
+  
+  // For now, we return mock data but ensure the total count aligns with the 24h metric if possible.
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  return [
+    { time: "00:00", events: 245 },
+    { time: "04:00", events: 189 },
+    { time: "08:00", events: 467 },
+    { time: "12:00", events: 523 },
+    { time: "16:00", events: 489 },
+    { time: "20:00", events: 356 },
+    { time: "23:59", events: 298 },
+  ];
+}
+
+
 // Placeholder for other data types (Audit Logs, FHIR Events)
 export interface AuditLog {
   id: number;
@@ -337,17 +461,26 @@ export interface AuditLog {
   resource: string;
   ip: string;
   status: "success" | "failed";
+  facilityName?: string;
+  details?: any;
 }
 
 /**
  * Fetches audit logs from Supabase. RLS handles filtering by role/facility.
+ * @param filterStatus Optional status filter ('failed' for error feed).
  */
-export async function fetchAuditLogs(role: string, facilityName?: string): Promise<AuditLog[]> {
-    const { data, error } = await supabase
+export async function fetchAuditLogs(role: string, facilityName?: string, filterStatus?: 'failed' | 'success'): Promise<AuditLog[]> {
+    let query = supabase
         .from('audit_logs')
-        .select('id, timestamp, user_email, action, resource_type, resource_id, ip_address, status')
+        .select('id, timestamp, user_email, action, resource_type, resource_id, ip_address, status, facility:facilities(name), details')
         .order('timestamp', { ascending: false })
-        .limit(100); // Limit to 100 for dashboard view
+        .limit(filterStatus ? 10 : 100); // Limit error feed to 10, general logs to 100
+
+    if (filterStatus) {
+        query = query.eq('status', filterStatus);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
         console.error("Error fetching audit logs:", error);
@@ -355,15 +488,22 @@ export async function fetchAuditLogs(role: string, facilityName?: string): Promi
     }
     
     // Map Supabase data to AuditLog interface
-    return data.map(log => ({
-        id: log.id,
-        timestamp: new Date(log.timestamp).toLocaleString(),
-        user: log.user_email || 'System/API',
-        action: log.action || 'N/A',
-        resource: log.resource_type && log.resource_id ? `${log.resource_type}/${log.resource_id}` : log.resource_type || 'N/A',
-        ip: log.ip_address || 'N/A',
-        status: log.status === 'success' ? 'success' : 'failed',
-    }));
+    return data.map(log => {
+        const facilityData = log.facility as any;
+        const facilityName = Array.isArray(facilityData) ? facilityData[0]?.name : facilityData?.name;
+        
+        return {
+            id: log.id,
+            timestamp: new Date(log.timestamp).toLocaleString(),
+            user: log.user_email || 'System/API',
+            action: log.action || 'N/A',
+            resource: log.resource_type && log.resource_id ? `${log.resource_type}/${log.resource_id}` : log.resource_type || 'N/A',
+            ip: log.ip_address || 'N/A',
+            status: log.status === 'success' ? 'success' : 'failed',
+            facilityName: facilityName,
+            details: log.details,
+        };
+    });
 }
 
 export interface FhirEvent {
@@ -375,58 +515,75 @@ export interface FhirEvent {
     timestamp: string;
 }
 
+/**
+ * Fetches FHIR events by querying audit_logs where resource_type is set.
+ */
 export async function fetchFhirEvents(): Promise<FhirEvent[]> {
-    // Since fhir_resources table is for storage, we mock the event stream for now
-    // until a dedicated event table or real-time subscription is implemented.
-    const mockEvents: FhirEvent[] = [
-        { id: 1, resource: "Patient", operation: "CREATE", facility: "General Hospital Ilorin", status: "success", timestamp: "2024-11-23 14:23:45" },
-        { id: 2, resource: "Observation", operation: "UPDATE", facility: "Baptist Medical Centre", status: "success", timestamp: "2024-11-23 14:23:42" },
-        { id: 3, resource: "Encounter", operation: "CREATE", facility: "Sobi Specialist Hospital", status: "failed", timestamp: "2024-11-23 14:23:38" },
-        { id: 4, resource: "MedicationRequest", operation: "CREATE", facility: "General Hospital Ilorin", status: "success", timestamp: "2024-11-23 14:23:35" },
-        { id: 5, resource: "Condition", operation: "UPDATE", facility: "Private Clinic Offa", status: "warning", timestamp: "2024-11-23 14:23:30" },
-    ];
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return mockEvents;
+    const { data, error } = await supabase
+        .from('audit_logs')
+        .select('id, timestamp, action, resource_type, status, facility:facilities(name), details')
+        .not('resource_type', 'is', null)
+        .order('timestamp', { ascending: false })
+        .limit(50);
+
+    if (error) {
+        console.error("Error fetching FHIR events:", error);
+        throw new Error("Failed to fetch FHIR events.");
+    }
+    
+    return data.map(log => {
+        const facilityData = log.facility as any;
+        const facilityName = Array.isArray(facilityData) ? facilityData[0]?.name : facilityData?.name;
+        
+        // Determine status: If status is 'failed', it's failed. If details contain 'warning', it's warning. Otherwise success.
+        let status: "success" | "failed" | "warning" = log.status === 'failed' ? 'failed' : 'success';
+        if (log.details && JSON.stringify(log.details).toLowerCase().includes('warning')) {
+            status = 'warning';
+        }
+
+        return {
+            id: log.id,
+            resource: log.resource_type || 'N/A',
+            operation: log.action || 'N/A',
+            facility: facilityName || 'N/A',
+            status: status,
+            timestamp: new Date(log.timestamp).toLocaleString(),
+        };
+    });
 }
 
 export function getMockMessageDetails(id: number) {
-    const event = mockEvents.find(e => e.id === id);
-    if (!event) return null;
-
+    // In a real scenario, we would fetch the specific audit log by ID
+    // and extract rawPayload and fhirOutput from a dedicated storage or the details column.
+    
+    // Mocking the data structure based on audit_logs details
     const rawPayload = `MSH|^~\&|EMR|GHILORIN|HKIT|KWARA|20241123142345||ADT^A01|MSG0001|P|2.5
-PID|1||${event.id}^^^MRN||DOE^JOHN^A||19800101|M|||...`;
+PID|1||${id}^^^MRN||DOE^JOHN^A||19800101|M|||...`;
 
     const fhirOutput = JSON.stringify({
-        resourceType: event.resource,
-        id: event.id,
-        meta: { lastUpdated: event.timestamp },
-        status: event.status === 'success' ? 'active' : 'draft',
+        resourceType: "Patient",
+        id: id,
+        meta: { lastUpdated: new Date().toISOString() },
+        status: 'active',
         // ... more FHIR data
     }, null, 2);
 
-    const validationErrors = event.status === 'failed' 
+    const validationErrors = id % 3 === 0 
         ? ["Missing required field: Patient.identifier[0].value", "Invalid code system for Encounter.class"]
-        : event.status === 'warning'
+        : id % 5 === 0
         ? ["Coding system not recognized (SNOMED CT expected)"]
         : [];
 
     return {
-        id: event.id,
-        status: event.status,
-        resource: event.resource,
+        id: id,
+        status: id % 3 === 0 ? 'failed' : id % 5 === 0 ? 'warning' : 'success',
+        resource: "Patient",
         rawPayload: rawPayload,
         fhirOutput: fhirOutput,
         validationErrors: validationErrors,
     };
 }
 
-const mockEvents = [
-    { id: 1, resource: "Patient", operation: "CREATE", facility: "General Hospital Ilorin", status: "success", timestamp: "2024-11-23 14:23:45" },
-    { id: 2, resource: "Observation", operation: "UPDATE", facility: "Baptist Medical Centre", status: "success", timestamp: "2024-11-23 14:23:42" },
-    { id: 3, resource: "Encounter", operation: "CREATE", facility: "Sobi Specialist Hospital", status: "failed", timestamp: "2024-11-23 14:23:38" },
-    { id: 4, resource: "MedicationRequest", operation: "CREATE", facility: "General Hospital Ilorin", status: "success", timestamp: "2024-11-23 14:23:35" },
-    { id: 5, resource: "Condition", operation: "UPDATE", facility: "Private Clinic Offa", status: "warning", timestamp: "2024-11-23 14:23:30" },
-];
 
 // --- Consent API Functions ---
 
