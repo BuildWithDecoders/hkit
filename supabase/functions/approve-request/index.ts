@@ -1,4 +1,4 @@
-/// <reference lib="deno.ns" />
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -109,8 +109,13 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // 4. Mark the registration request as approved
+    
+    // 4. SIMULATE SENDING WELCOME EMAIL (Backend Action)
+    console.log(`[EMAIL SERVICE MOCK] Sending welcome email to ${email}`);
+    console.log(`Subject: Hkit Account Approved - Welcome to the Kwara HIE`);
+    console.log(`Body: Dear ${name}, your account has been approved. Your temporary password is: ${password}. Please log in and change it immediately.`);
+    
+    // 5. Mark the registration request as approved
     const { error: updateRequestError } = await supabaseAdmin
       .from("registration_requests")
       .update({ status: "approved", approved_by: mohUserId })
