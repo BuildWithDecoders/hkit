@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Database } from "lucide-react";
-import { mockHeatmapData } from "@/api/hkit";
+import { Database, Loader2, AlertTriangle } from "lucide-react";
+import { HeatmapRow } from "@/api/hkit";
 
 const resources = ["Patient", "Encounter", "Observation", "Medication"];
 
@@ -12,7 +12,30 @@ const getComplianceColor = (score: number) => {
   return "bg-destructive/20 text-destructive";
 };
 
-export function DataQualityHeatmap() {
+interface DataQualityHeatmapProps {
+    data: HeatmapRow[];
+    isLoading: boolean;
+    isError: boolean;
+}
+
+export function DataQualityHeatmap({ data, isLoading, isError }: DataQualityHeatmapProps) {
+  if (isLoading) {
+    return (
+      <Card className="p-6 border-border h-[400px] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </Card>
+    );
+  }
+  
+  if (isError || data.length === 0) {
+    return (
+      <Card className="p-8 border-destructive/20 bg-destructive/10 text-center">
+        <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-3" />
+        <p className="text-destructive">Error loading heatmap data.</p>
+      </Card>
+    );
+  }
+
   return (
     <Card className="p-6 border-border">
       <CardHeader className="p-0 mb-4">
@@ -33,7 +56,7 @@ export function DataQualityHeatmap() {
               </tr>
             </thead>
             <tbody>
-              {mockHeatmapData.map((row, index) => (
+              {data.map((row, index) => (
                 <tr key={index} className="border-b border-border/50 last:border-b-0 hover:bg-secondary/50 transition-colors">
                   <td className="py-3 px-2 font-medium text-foreground text-sm">{row.facility}</td>
                   {resources.map((res) => {

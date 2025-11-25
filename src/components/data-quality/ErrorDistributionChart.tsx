@@ -7,13 +7,13 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { ErrorDistribution } from "@/api/hkit";
+import { Loader2 } from "lucide-react";
 
-const errorDistributionData = [
-  { name: "Missing Identifiers", value: 450, color: "hsl(var(--chart-1))" },
-  { name: "Invalid Date Formats", value: 320, color: "hsl(var(--chart-2))" },
-  { name: "Coding System Errors", value: 210, color: "hsl(var(--chart-3))" },
-  { name: "FHIR Structure Violations", value: 150, color: "hsl(var(--chart-4))" },
-];
+interface ErrorDistributionChartProps {
+    data: ErrorDistribution[];
+    isLoading: boolean;
+}
 
 const RADIAN = Math.PI / 180;
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
@@ -28,7 +28,22 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   );
 };
 
-export function ErrorDistributionChart() {
+export function ErrorDistributionChart({ data, isLoading }: ErrorDistributionChartProps) {
+  if (isLoading) {
+    return (
+      <Card className="p-6 border-border">
+        <CardHeader className="p-0 mb-4">
+          <CardTitle className="text-lg font-semibold text-foreground">
+            Validation Error Distribution (24h)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 h-[300px] flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+    
   return (
     <Card className="p-6 border-border">
       <CardHeader className="p-0 mb-4">
@@ -40,7 +55,7 @@ export function ErrorDistributionChart() {
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={errorDistributionData}
+              data={data}
               cx="50%"
               cy="50%"
               innerRadius={60}
@@ -51,7 +66,7 @@ export function ErrorDistributionChart() {
               labelLine={false}
               label={renderCustomizedLabel}
             >
-              {errorDistributionData.map((entry, index) => (
+              {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>

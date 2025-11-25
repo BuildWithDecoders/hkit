@@ -8,18 +8,30 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { CompletenessTrend } from "@/api/hkit";
+import { Loader2 } from "lucide-react";
 
-const completenessTrendData = [
-  { day: "Day 1", score: 82 },
-  { day: "Day 2", score: 84 },
-  { day: "Day 3", score: 85 },
-  { day: "Day 4", score: 87 },
-  { day: "Day 5", score: 87.3 },
-  { day: "Day 6", score: 88 },
-  { day: "Day 7", score: 89 },
-];
+interface CompletenessTrendChartProps {
+    data: CompletenessTrend[];
+    isLoading: boolean;
+}
 
-export function CompletenessTrendChart() {
+export function CompletenessTrendChart({ data, isLoading }: CompletenessTrendChartProps) {
+  if (isLoading) {
+    return (
+      <Card className="p-6 border-border">
+        <CardHeader className="p-0 mb-4">
+          <CardTitle className="text-lg font-semibold text-foreground">
+            Overall Completeness Trend (7 Days)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 h-[300px] flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="p-6 border-border">
       <CardHeader className="p-0 mb-4">
@@ -29,7 +41,7 @@ export function CompletenessTrendChart() {
       </CardHeader>
       <CardContent className="p-0">
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={completenessTrendData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+          <LineChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" />
             <YAxis 

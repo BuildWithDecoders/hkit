@@ -694,7 +694,7 @@ export async function fetchMpiRecords(): Promise<MpiRecord[]> {
 }
 
 
-// --- Data Quality Mock ---
+// --- Data Quality API Functions (New) ---
 
 export interface FacilityScore {
   name: string;
@@ -726,3 +726,64 @@ export const mockHeatmapData: HeatmapRow[] = [
   { facility: "Sobi Hospital", Patient: 85, Encounter: 88, Observation: 91, Medication: 82 },
   { facility: "Private Clinic", Patient: 75, Encounter: 70, Observation: 78, Medication: 65 },
 ];
+
+export interface CompletenessTrend {
+  day: string;
+  score: number;
+}
+
+export interface ErrorDistribution {
+  name: string;
+  value: number;
+  color: string;
+}
+
+/**
+ * Fetches data quality scores for all facilities (MoH) or a specific facility (FacilityAdmin).
+ */
+export async function fetchFacilityScores(role: UserRole, facilityName?: string): Promise<FacilityScore[]> {
+  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+  if (role === 'FacilityAdmin' && facilityName) {
+    return mockFacilityScores.filter(f => f.name === facilityName);
+  }
+  return mockFacilityScores;
+}
+
+/**
+ * Fetches data quality heatmap data (MoH only).
+ */
+export async function fetchDataQualityHeatmap(): Promise<HeatmapRow[]> {
+  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+  return mockHeatmapData;
+}
+
+/**
+ * Fetches completeness trend data.
+ */
+export async function fetchCompletenessTrend(facilityName?: string): Promise<CompletenessTrend[]> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    // Mock data remains the same regardless of facility for simplicity
+    return [
+        { day: "Day 1", score: 82 },
+        { day: "Day 2", score: 84 },
+        { day: "Day 3", score: 85 },
+        { day: "Day 4", score: 87 },
+        { day: "Day 5", score: 87.3 },
+        { day: "Day 6", score: 88 },
+        { day: "Day 7", score: 89 },
+    ];
+}
+
+/**
+ * Fetches error distribution data.
+ */
+export async function fetchErrorDistribution(facilityName?: string): Promise<ErrorDistribution[]> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    // Mock data remains the same regardless of facility for simplicity
+    return [
+        { name: "Missing Identifiers", value: 450, color: "hsl(var(--chart-1))" },
+        { name: "Invalid Date Formats", value: 320, color: "hsl(var(--chart-2))" },
+        { name: "Coding System Errors", value: 210, color: "hsl(var(--chart-3))" },
+        { name: "FHIR Structure Violations", value: 150, color: "hsl(var(--chart-4))" },
+    ];
+}

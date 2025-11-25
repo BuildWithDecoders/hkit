@@ -12,9 +12,13 @@ import {
   fetchMpiRecords,
   updateFacilityIntegrationSettings,
   updateMoHSystemSettings,
-  fetchCommandCenterMetrics, // Import new function
-  fetchLgaDistribution, // Import new function
-  fetchEventStreamData, // Import new function
+  fetchCommandCenterMetrics,
+  fetchLgaDistribution,
+  fetchEventStreamData,
+  fetchFacilityScores, // New import
+  fetchDataQualityHeatmap, // New import
+  fetchCompletenessTrend, // New import
+  fetchErrorDistribution, // New import
   Facility,
   FacilityStatus,
   AuditLog,
@@ -24,9 +28,13 @@ import {
   MpiRecord,
   FacilityIntegrationSettings,
   MoHSystemSettings,
-  CommandCenterMetrics, // Import new type
-  LgaDistribution, // Import new type
-  EventStreamData, // Import new type
+  CommandCenterMetrics,
+  LgaDistribution,
+  EventStreamData,
+  FacilityScore, // New type import
+  HeatmapRow, // New type import
+  CompletenessTrend, // New type import
+  ErrorDistribution, // New type import
 } from "@/api/hkit";
 import { toast } from "sonner";
 import { useAuth } from "./use-auth";
@@ -195,7 +203,7 @@ export function useUpdateMoHSystemSettings() {
 }
 
 
-// --- Command Center Hooks (New) ---
+// --- Command Center Hooks ---
 
 export function useCommandCenterMetrics() {
   return useQuery<CommandCenterMetrics>({
@@ -226,6 +234,49 @@ export function useLiveErrorFeed() {
     queryKey: ["liveErrorFeed", role, facilityName],
     queryFn: () => fetchAuditLogs(role || "Guest", facilityName, 'failed'),
   });
+}
+
+
+// --- Data Quality Hooks (New) ---
+
+export function useFacilityScores() {
+  const { role, user } = useAuth();
+  const facilityName = user?.facilityName;
+  
+  return useQuery<FacilityScore[]>({
+    queryKey: ["facilityScores", role, facilityName],
+    queryFn: () => fetchFacilityScores(role, facilityName),
+  });
+}
+
+export function useDataQualityHeatmap() {
+  const { role } = useAuth();
+  
+  return useQuery<HeatmapRow[]>({
+    queryKey: ["dataQualityHeatmap"],
+    queryFn: fetchDataQualityHeatmap,
+    enabled: role === 'MoH', // Only fetch if MoH
+  });
+}
+
+export function useCompletenessTrend() {
+    const { user } = useAuth();
+    const facilityName = user?.facilityName;
+    
+    return useQuery<CompletenessTrend[]>({
+        queryKey: ["completenessTrend", facilityName],
+        queryFn: () => fetchCompletenessTrend(facilityName),
+    });
+}
+
+export function useErrorDistribution() {
+    const { user } = useAuth();
+    const facilityName = user?.facilityName;
+    
+    return useQuery<ErrorDistribution[]>({
+        queryKey: ["errorDistribution", facilityName],
+        queryFn: () => fetchErrorDistribution(facilityName),
+    });
 }
 
 
