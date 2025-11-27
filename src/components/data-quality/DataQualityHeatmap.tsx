@@ -27,11 +27,20 @@ export function DataQualityHeatmap({ data, isLoading, isError }: DataQualityHeat
     );
   }
   
-  if (isError || data.length === 0) {
+  if (isError) {
     return (
       <Card className="p-8 border-destructive/20 bg-destructive/10 text-center">
         <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-3" />
         <p className="text-destructive">Error loading heatmap data.</p>
+      </Card>
+    );
+  }
+  
+  if (data.length === 0) {
+    return (
+      <Card className="p-8 border-border text-center bg-secondary/50">
+        <Database className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+        <p className="text-muted-foreground">No resource compliance data available yet.</p>
       </Card>
     );
   }
