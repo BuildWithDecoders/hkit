@@ -62,18 +62,20 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: fetchError.message }), { status: 500, headers: corsHeaders });
       }
       
-      // Flatten the structure for the client, ensuring robust handling of null auth_user
+      // Flatten the structure for the client, ensuring robust handling of null/array auth_user
       const users = profiles.map(p => {
-          const authUser = p.auth_user;
+          const rawAuthUser = p.auth_user;
+          // Normalize authUser: if it's an array, take the first element. Otherwise, use it directly.
+          const authUser = Array.isArray(rawAuthUser) ? rawAuthUser[0] : rawAuthUser;
           
           return {
               id: p.id,
               firstName: p.first_name,
               lastName: p.last_name,
-              email: authUser ? authUser.email : 'N/A (Auth Missing)',
+              email: authUser?.email || 'N/A (Auth Missing)',
               role: p.role,
-              status: authUser && authUser.last_sign_in_at ? 'Active' : 'Inactive',
-              lastSignIn: authUser ? authUser.last_sign_in_at : null,
+              status: authUser?.last_sign_in_at ? 'Active' : 'Inactive',
+              lastSignIn: authUser?.last_sign_in_at || null,
           };
       });
 
