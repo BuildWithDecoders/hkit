@@ -63,15 +63,19 @@ serve(async (req) => {
       }
       
       // Flatten the structure for the client, using optional chaining for safety
-      const users = profiles.map(p => ({
-          id: p.id,
-          firstName: p.first_name,
-          lastName: p.last_name,
-          email: p.auth_user?.email || 'N/A', // FIX: Use optional chaining
-          role: p.role,
-          status: p.auth_user?.last_sign_in_at ? 'Active' : 'Inactive', // FIX: Use optional chaining
-          lastSignIn: p.auth_user?.last_sign_in_at, // FIX: Use optional chaining
-      }));
+      const users = profiles.map(p => {
+          const authUser = p.auth_user;
+          
+          return {
+              id: p.id,
+              firstName: p.first_name,
+              lastName: p.last_name,
+              email: authUser?.email || 'N/A (Auth Missing)',
+              role: p.role,
+              status: authUser?.last_sign_in_at ? 'Active' : 'Inactive',
+              lastSignIn: authUser?.last_sign_in_at || null,
+          };
+      });
 
       return new Response(JSON.stringify(users), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
