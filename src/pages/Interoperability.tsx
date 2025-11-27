@@ -10,6 +10,7 @@ import { MessageInspectorDialog } from "@/components/interoperability/MessageIns
 import { getMockMessageDetails, FhirEvent } from "@/api/hkit";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { HL7TransformerConsole } from "@/components/interoperability/HL7TransformerConsole"; // Import new component
 
 const Interoperability = () => {
   const { data: fhirEvents, isLoading: isLoadingEvents, isError: isErrorEvents } = useFhirEvents();
@@ -37,10 +38,8 @@ const Interoperability = () => {
     toast.info(`Action: Viewing detailed validation report for log ID #${issueId}`);
   };
 
-  const handleTransformValidate = () => {
-    toast.info("Action: Running HL7 transformation and validation (Mock Action)");
-  };
-  
+  // Removed handleTransformValidate as it's now handled inside HL7TransformerConsole
+
   const totalEvents = metrics?.totalEvents24h || 0;
   const successRate = metrics?.successRate || 0;
   const failedEvents = validationErrors?.length || 0; // Use actual failed count from live error feed
@@ -249,42 +248,7 @@ const Interoperability = () => {
         <TabsContent value="transformer" className="mt-6">
           <Card className="border-border p-6">
             <h3 className="font-semibold text-foreground mb-4">HL7 to FHIR Transformer</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">HL7 v2 Input</h4>
-                <div className="bg-secondary border border-border rounded-lg p-4 font-mono text-xs text-foreground h-64 overflow-auto">
-                  MSH|^~\&|SENDING_APP|SENDING_FAC|RECEIVING_APP|...
-                  <br />
-                  PID|1||12345^^^MRN||DOE^JOHN^A||19800101|M|||...
-                  <br />
-                  OBR|1|12345|67890|CBC^Complete Blood Count...
-                </div>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">FHIR R4 Output</h4>
-                <div className="bg-secondary border border-border rounded-lg p-4 font-mono text-xs text-foreground h-64 overflow-auto">
-                  {`{
-  "resourceType": "Patient",
-  "id": "12345",
-  "identifier": [{
-    "system": "MRN",
-    "value": "12345"
-  }],
-  "name": [{
-    "family": "DOE",
-    "given": ["JOHN", "A"]
-  }],
-  "gender": "male",
-  "birthDate": "1980-01-01"
-}`}
-                </div>
-              </div>
-            </div>
-            <div className="mt-4 flex justify-end">
-              <Button className="bg-primary hover:bg-primary/90" onClick={handleTransformValidate}>
-                Transform & Validate
-              </Button>
-            </div>
+            <HL7TransformerConsole />
           </Card>
         </TabsContent>
       </Tabs>
