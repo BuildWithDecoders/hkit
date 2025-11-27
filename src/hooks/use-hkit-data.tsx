@@ -20,10 +20,11 @@ import {
   fetchCompletenessTrend,
   fetchErrorDistribution,
   fetchValidationErrorsCount,
-  fetchMoHUsers, // New import
-  createMoHUser, // New import
-  updateMoHUser, // New import
-  deleteMoHUser, // New import
+  fetchMoHUsers,
+  createMoHUser,
+  updateMoHUser,
+  deleteMoHUser,
+  fetchAuditMetrics, // New import
   Facility,
   FacilityStatus,
   AuditLog,
@@ -40,8 +41,9 @@ import {
   HeatmapRow,
   CompletenessTrend,
   ErrorDistribution,
-  MoHUser, // New type import
-  MoHUserCreationParams, // New type import
+  MoHUser,
+  MoHUserCreationParams,
+  AuditMetrics, // New type import
 } from "@/api/hkit";
 import { toast } from "sonner";
 import { useAuth } from "./use-auth";
@@ -356,6 +358,16 @@ export function useValidationErrorsCount() {
 
 
 // --- Audit & Interoperability Hooks ---
+
+export function useAuditMetrics() {
+    const { role, user } = useAuth();
+    // The query key ensures the metrics update when the user/role changes, 
+    // as RLS filters the underlying data.
+    return useQuery<AuditMetrics>({
+        queryKey: ["auditMetrics", role, user?.facilityName],
+        queryFn: fetchAuditMetrics,
+    });
+}
 
 export function useAuditLogs() {
     const { role, user } = useAuth();

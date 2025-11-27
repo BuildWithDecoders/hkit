@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Download, Filter, Loader2, AlertTriangle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAuditLogs } from "@/hooks/use-hkit-data";
+import { useAuditLogs, useAuditMetrics } from "@/hooks/use-hkit-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
 
 const Audit = () => {
-  const { data: auditLogs, isLoading, isError } = useAuditLogs();
+  const { data: auditLogs, isLoading: isLoadingLogs, isError: isErrorLogs } = useAuditLogs();
+  const { data: metrics, isLoading: isLoadingMetrics, isError: isErrorMetrics } = useAuditMetrics();
   const { role, user } = useAuth();
 
   const getTitle = () => {
@@ -29,8 +30,18 @@ const Audit = () => {
     document.title = `${getTitle()} | Hkit Portal`;
   }, [role, user?.facilityName, user?.name]);
 
+  const renderMetricValue = (value: number | string, colorClass: string = 'text-foreground') => {
+    if (isLoadingMetrics) {
+      return <Loader2 className="w-6 h-6 animate-spin" />;
+    }
+    if (isErrorMetrics) {
+      return "N/A";
+    }
+    return <span className={colorClass}>{value.toLocaleString()}</span>;
+  };
+
   const renderAuditList = () => {
-    if (isLoading) {
+    if (isLoadingLogs) {
       return (
         <div className="space-y-2 p-4">
           {[...Array(6)].map((_, i) => (
@@ -42,7 +53,7 @@ const Audit = () => {
       );
     }
 
-    if (isError || !auditLogs) {
+    if (isErrorLogs || !auditLogs) {
       return (
         <div className="p-4 text-center text-destructive">
           <AlertTriangle className="w-6 h-6 mx-auto mb-2" />
@@ -109,19 +120,27 @@ const Audit = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-4 border-border">
           <p className="text-sm text-muted-foreground mb-1">Total Events (24h)</p>
-          <p className="text-2xl font-bold text-foreground">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "12,456"}</p>
+          <p className="text-2xl font-bold text-foreground">
+            {renderMetricValue(metrics?.total || 0)}
+          </p>
         </Card>
         <Card className="p-4 border-border">
           <p className="text-sm text-muted-foreground mb-1">Successful</p>
-          <p className="text-2xl font-bold text-success">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "12,289"}</p>
+          <p className="text-2xl font-bold">
+            {renderMetricValue(metrics?.successful || 0, "text-success")}
+          </p>
         </Card>
         <Card className="p-4 border-border">
           <p className="text-sm text-muted-foreground mb-1">Failed</p>
-          <p className="text-2xl font-bold text-destructive">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "167"}</p>
+          <p className="text-2xl font-bold">
+            {renderMetricValue(metrics?.failed || 0, "text-destructive")}
+          </p>
         </Card>
         <Card className="p-4 border-border">
           <p className="text-sm text-muted-foreground mb-1">Unique Users</p>
-          <p className="text-2xl font-bold text-foreground">{isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "248"}</p>
+          <p className="text-2xl font-bold text-foreground">
+            {renderMetricValue(metrics?.uniqueUsers || 0)}
+          </p>
         </Card>
       </div>
 
