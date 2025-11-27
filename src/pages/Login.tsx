@@ -2,10 +2,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { LogIn, Loader2 } from "lucide-react";
+import { LogIn, Loader2, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+
+const MOCK_CREDENTIALS = [
+  { role: "MoH Admin", email: "moh@gmail.com", path: "/moh/dashboard" },
+  { role: "Facility Admin", email: "facilities@gmail.com", path: "/facility/dashboard" },
+  { role: "Developer", email: "developer@gmail.com", path: "/developer/dashboard" },
+];
+const MOCK_PASSWORD = "password123";
+
 
 const Login = () => {
   const { login, isAuthenticated, isLoading } = useAuth();
@@ -35,7 +44,7 @@ const Login = () => {
   const isBusy = isLoading || isSubmitting;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary/30 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-secondary/30 p-4 space-y-6">
       <Card className="w-full max-w-md border-border bg-card/80 backdrop-blur-sm animate-fade-in">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-2">
@@ -89,6 +98,30 @@ const Login = () => {
             Need access? <Link to="/register" className="text-primary hover:underline">Register your organization</Link>
           </p>
         </CardContent>
+      </Card>
+      
+      {/* Hackathon Judge Credentials */}
+      <Card className="w-full max-w-md border-primary/50 bg-card/90 animate-fade-in p-6">
+        <h3 className="text-lg font-bold text-primary mb-3 flex items-center gap-2">
+          <Shield className="w-5 h-5" /> Hackathon Judge Credentials
+        </h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Use these accounts to quickly test role-based access control (Password: <span className="font-mono text-foreground bg-secondary px-1 rounded">{MOCK_PASSWORD}</span>)
+        </p>
+        
+        <div className="space-y-3">
+          {MOCK_CREDENTIALS.map((cred) => (
+            <div key={cred.role} className="flex justify-between items-center p-3 bg-secondary rounded-lg border border-border">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-foreground">{cred.role}</span>
+                <span className="text-xs text-muted-foreground">{cred.email}</span>
+              </div>
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                {cred.path}
+              </Badge>
+            </div>
+          ))}
+        </div>
       </Card>
     </div>
   );
