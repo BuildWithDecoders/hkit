@@ -19,7 +19,11 @@ import {
   fetchDataQualityHeatmap,
   fetchCompletenessTrend,
   fetchErrorDistribution,
-  fetchValidationErrorsCount, // New import
+  fetchValidationErrorsCount,
+  fetchMoHUsers, // New import
+  createMoHUser, // New import
+  updateMoHUser, // New import
+  deleteMoHUser, // New import
   Facility,
   FacilityStatus,
   AuditLog,
@@ -36,6 +40,8 @@ import {
   HeatmapRow,
   CompletenessTrend,
   ErrorDistribution,
+  MoHUser, // New type import
+  MoHUserCreationParams, // New type import
 } from "@/api/hkit";
 import { toast } from "sonner";
 import { useAuth } from "./use-auth";
@@ -156,6 +162,64 @@ export function useCreateApprovedUser() {
     },
     onError: (error) => {
       toast.error("User Creation Failed", {
+        description: error.message,
+      });
+    },
+  });
+}
+
+
+// --- MoH User Management Hooks (NEW) ---
+
+export function useMoHUsers() {
+  return useQuery<MoHUser[]>({
+    queryKey: ["mohUsers"],
+    queryFn: fetchMoHUsers,
+  });
+}
+
+export function useCreateMoHUser() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, MoHUserCreationParams>({
+    mutationFn: createMoHUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mohUsers"] });
+      toast.success("MoH User created successfully!");
+    },
+    onError: (error) => {
+      toast.error("Failed to create user.", {
+        description: error.message,
+      });
+    },
+  });
+}
+
+export function useUpdateMoHUser() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, { id: string, params: Partial<MoHUserCreationParams> }>({
+    mutationFn: ({ id, params }) => updateMoHUser(id, params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mohUsers"] });
+      toast.success("MoH User updated successfully!");
+    },
+    onError: (error) => {
+      toast.error("Failed to update user.", {
+        description: error.message,
+      });
+    },
+  });
+}
+
+export function useDeleteMoHUser() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, string>({
+    mutationFn: deleteMoHUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mohUsers"] });
+      toast.success("MoH User deleted successfully.");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete user.", {
         description: error.message,
       });
     },

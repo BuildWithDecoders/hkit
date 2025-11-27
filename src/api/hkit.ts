@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/hooks/use-auth";
+import { generateRandomPassword } from "@/lib/utils";
 
 export type FacilityStatus = "verified" | "pending" | "rejected";
 
@@ -43,7 +44,85 @@ export interface DeveloperRegistrationData {
   useCase: string;
 }
 
+// --- MoH User Management Types ---
+
+export type MoHInternalRole = 'MoH' | 'DataAnalyst' | 'SystemDeveloper';
+
+export interface MoHUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: MoHInternalRole;
+  status: 'Active' | 'Inactive';
+  lastSignIn: string | null;
+}
+
+export interface MoHUserCreationParams {
+  email: string;
+  password?: string;
+  firstName: string;
+  lastName: string;
+  role: MoHInternalRole;
+}
+
 // --- Supabase API Functions ---
+
+const MOH_USER_MANAGEMENT_URL = "https://ejoeqakgkonqhujwiaaw.supabase.co/functions/v1/manage-moh-users";
+
+async function invokeMoHUserManagement(action: string, payload?: any): Promise<any> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+
+  if (!token) {
+    throw new Error("Authentication required for MoH user management.");
+  }
+
+  const isGet = action === 'GET_USERS';
+  
+  const response = await fetch(MOH_USER_MANAGEMENT_URL, {
+    method: isGet ? 'GET' : 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: isGet ? undefined : JSON.stringify({ action, payload }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || data.error) {
+    throw new Error(data.error || `API call failed with status ${response.status}`);
+  }
+  
+  return data;
+}
+
+export async function fetchMoHUsers(): Promise<MoHUser[]> {
+  return invokeMoHUserManagement('GET_USERS');
+}
+
+export async function createMoHUser(params: MoHUserCreationParams): Promise<void> {
+    // Generate a temporary password if not provided (required by the Edge Function)
+    const password = params.password || generateRandomPassword(12);
+    
+    await invokeMoHUserManagement('CREATE_USER', {
+        ...params,
+        password: password,
+    });
+}
+
+export async function updateMoHUser(id: string, params: Partial<MoHUserCreationParams>): Promise<void> {
+    await invokeMoHUserManagement('UPDATE_USER', {
+        id,
+        ...params,
+    });
+}
+
+export async function deleteMoHUser(id: string): Promise<void> {
+    await invokeMoHUserManagement('DELETE_USER', { id });
+}
+
 
 export async function fetchFacilities(role: UserRole, facilityId?: number): Promise<Facility[]> {
   let query = supabase
