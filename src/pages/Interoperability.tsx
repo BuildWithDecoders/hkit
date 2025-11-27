@@ -4,23 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2, XCircle, AlertTriangle, RefreshCw, Eye, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useFhirEvents, useCommandCenterMetrics } from "@/hooks/use-hkit-data";
+import { useFhirEvents, useCommandCenterMetrics, useLiveErrorFeed } from "@/hooks/use-hkit-data";
 import { useState, useEffect } from "react";
 import { MessageInspectorDialog } from "@/components/interoperability/MessageInspectorDialog";
 import { getMockMessageDetails, FhirEvent } from "@/api/hkit";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
-// Mock validation issues are removed as they should be derived from the event stream
-const validationIssues = [
-  { id: 1, message: "Missing required field: patient.identifier", resource: "Patient", facility: "General Hospital", severity: "error" },
-  { id: 2, message: "Invalid date format in effectiveDateTime", resource: "Observation", facility: "Baptist Medical", severity: "error" },
-  { id: 3, message: "Coding system not recognized", resource: "Condition", facility: "Sobi Hospital", severity: "warning" },
-];
-
 const Interoperability = () => {
   const { data: fhirEvents, isLoading: isLoadingEvents, isError: isErrorEvents } = useFhirEvents();
   const { data: metrics, isLoading: isLoadingMetrics } = useCommandCenterMetrics();
+  const { data: validationErrors, isLoading: isLoadingValidation, isError: isErrorValidation } = useLiveErrorFeed();
   
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -39,7 +33,8 @@ const Interoperability = () => {
   };
 
   const handleViewValidationDetails = (issueId: number) => {
-    toast.info(`Action: Viewing detailed validation report for issue #${issueId}`);
+    // In a real app, this would fetch the full audit log details
+    toast.info(`Action: Viewing detailed validation report for log ID #${issueId}`);
   };
 
   const handleTransformValidate = () => {
@@ -47,8 +42,9 @@ const Interoperability = () => {
   };
   
   const totalEvents = metrics?.totalEvents24h || 0;
-  const successfulEvents = Math.round(totalEvents * (metrics?.successRate || 100) / 100);
-  const failedEvents = totalEvents - successfulEvents;
+  const successRate = metrics?.successRate || 0;
+  const failedEvents = validationErrors?.length || 0; // Use actual failed count from live error feed
+  const successfulEvents = totalEvents - failedEvents;
   // Warning count is mocked as we don't have a direct metric for it yet
   const warningEvents = 216; 
 
@@ -110,6 +106,66 @@ const Interoperability = () => {
       </div>
     );
   };
+  
+  const renderValidationIssues = () => {
+    if (isLoadingValidation) {
+      return (
+        <div className="p-4 text-center">
+          <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
+          Loading validation errors...
+        </div>
+      );
+    }
+    
+    if (isErrorValidation || !validationErrors) {
+      return (
+        <div className="p-4 text-center text-destructive">
+          <AlertTriangle className="w-6 h-6 mx-auto mb-2" />
+          Failed to load validation issues.
+        </div>
+      );
+    }
+    
+    if (validationErrors.length === 0) {
+      return (
+        <div className="p-6 rounded-lg bg-success/10 border border-success/20 text-center">
+          <CheckCircle2 className="w-6 h-6 text-success mx-auto mb-2" />
+          <p className="text-sm text-success">No recent validation errors found (24h).</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-4 space-y-3">
+        {validationErrors.map((issue) => (
+          <div
+            key={issue.id}
+            className="p-4 rounded-lg bg-secondary border border-border"
+          >
+            <div className="flex items-start gap-3">
+              <XCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">
+                  {issue.facilityName || 'System'} - {issue.resource}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1 truncate">
+                  Action: {issue.action} | Details: {issue.details ? JSON.stringify(issue.details).substring(0, 100) : 'N/A'}...
+                </p>
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="border-border flex-shrink-0"
+                onClick={() => handleViewValidationDetails(issue.id)}
+              >
+                View Details
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -118,7 +174,7 @@ const Interoperability = () => {
         <p className="text-muted-foreground">Track FHIR and HL7 data exchange in real-time</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4 border-border">
           <div className="flex items-center justify-between">
             <div>
@@ -132,7 +188,7 @@ const Interoperability = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Successful</p>
-              <p className="text-2xl font-bold text-success">{isLoadingMetrics ? <Loader2 className="w-6 h-6 animate-spin" /> : successfulEvents.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-success mt-1">{isLoadingMetrics ? <Loader2 className="w-6 h-6 animate-spin" /> : successfulEvents.toLocaleString()}</p>
             </div>
             <CheckCircle2 className="w-8 h-8 text-success" />
           </div>
@@ -141,7 +197,7 @@ const Interoperability = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Failed</p>
-              <p className="text-2xl font-bold text-destructive">{isLoadingMetrics ? <Loader2 className="w-6 h-6 animate-spin" /> : failedEvents.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-destructive">{isLoadingValidation ? <Loader2 className="w-6 h-6 animate-spin" /> : failedEvents.toLocaleString()}</p>
             </div>
             <XCircle className="w-8 h-8 text-destructive" />
           </div>
@@ -149,8 +205,8 @@ const Interoperability = () => {
         <Card className="p-4 border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Warnings</p>
-              <p className="text-2xl font-bold text-warning">{isLoadingMetrics ? <Loader2 className="w-6 h-6 animate-spin" /> : warningEvents.toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground">Success Rate</p>
+              <p className="text-2xl font-bold text-warning">{isLoadingMetrics ? <Loader2 className="w-6 h-6 animate-spin" /> : `${successRate}%`}</p>
             </div>
             <AlertTriangle className="w-8 h-8 text-warning" />
           </div>
@@ -160,7 +216,7 @@ const Interoperability = () => {
       <Tabs defaultValue="stream" className="w-full">
         <TabsList className="bg-secondary">
           <TabsTrigger value="stream">Event Stream</TabsTrigger>
-          <TabsTrigger value="validation">Validation Issues</TabsTrigger>
+          <TabsTrigger value="validation">Validation Issues ({failedEvents})</TabsTrigger>
           <TabsTrigger value="transformer">HL7 Transformer</TabsTrigger>
         </TabsList>
 
@@ -182,39 +238,11 @@ const Interoperability = () => {
         <TabsContent value="validation" className="mt-6">
           <Card className="border-border">
             <div className="p-4 border-b border-border">
-              <h3 className="font-semibold text-foreground">Validation Errors & Warnings</h3>
+              <h3 className="font-semibold text-foreground">Recent Validation Errors (Last 24h)</h3>
             </div>
-            <div className="p-4 space-y-3">
-              {validationIssues.map((issue) => (
-                <div
-                  key={issue.id}
-                  className="p-4 rounded-lg bg-secondary border border-border"
-                >
-                  <div className="flex items-start gap-3">
-                    {issue.severity === "error" ? (
-                      <XCircle className="w-5 h-5 text-destructive mt-0.5" />
-                    ) : (
-                      <AlertTriangle className="w-5 h-5 text-warning mt-0.5" />
-                    )}
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">{issue.message}</p>
-                      <div className="flex items-center gap-4 mt-2">
-                        <span className="text-xs text-muted-foreground">Resource: {issue.resource}</span>
-                        <span className="text-xs text-muted-foreground">Facility: {issue.facility}</span>
-                      </div>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="border-border"
-                      onClick={() => handleViewValidationDetails(issue.id)}
-                    >
-                      View Details
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ScrollArea className="h-[500px]">
+              {renderValidationIssues()}
+            </ScrollArea>
           </Card>
         </TabsContent>
 
