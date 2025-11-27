@@ -754,16 +754,53 @@ export async function fetchFacilityScores(role: UserRole, facilityName?: string)
 }
 
 /**
- * Fetches data quality heatmap data (MoH only). (MOCK)
+ * Fetches data quality heatmap data (MoH only).
  */
 export async function fetchDataQualityHeatmap(): Promise<HeatmapRow[]> {
-  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-  return [
-    { facility: "GH Ilorin", Patient: 98, Encounter: 95, Observation: 92, Medication: 90 },
-    { facility: "Baptist Medical", Patient: 95, Encounter: 90, Observation: 88, Medication: 85 },
-    { facility: "Sobi Hospital", Patient: 85, Encounter: 88, Observation: 91, Medication: 82 },
-    { facility: "Private Clinic", Patient: 75, Encounter: 70, Observation: 78, Medication: 65 },
-  ];
+  // Define the resources we are interested in
+  const resources = ["Patient", "Encounter", "Observation", "Medication"];
+
+  // 1. Fetch all compliance records and facility names
+  const { data: complianceData, error } = await supabase
+    .from('facility_resource_compliance')
+    .select('facility_id, resource_type, compliance_score, facility:facilities(name)')
+    .order('facility_id', { ascending: true });
+
+  if (error) {
+    console.error("Error fetching data quality heatmap:", error);
+    throw new Error("Failed to fetch data quality heatmap.");
+  }
+
+  // 2. Group and transform data into HeatmapRow format
+  const heatmapMap = new Map<number, HeatmapRow>();
+
+  complianceData.forEach(item => {
+    const facilityId = item.facility_id;
+    const facilityName = (item.facility as any)?.name || `Facility ${facilityId}`;
+    const resourceType = item.resource_type as keyof HeatmapRow;
+    const score = item.compliance_score;
+
+    if (!heatmapMap.has(facilityId)) {
+      // Initialize row with default scores (0) for all resources
+      const newRow: HeatmapRow = {
+        facility: facilityName,
+        Patient: 0,
+        Encounter: 0,
+        Observation: 0,
+        Medication: 0,
+      };
+      heatmapMap.set(facilityId, newRow);
+    }
+
+    const row = heatmapMap.get(facilityId)!;
+    if (resources.includes(item.resource_type)) {
+      // Assign the fetched score
+      (row[resourceType] as number) = score;
+    }
+  });
+
+  // 3. Convert map values to array
+  return Array.from(heatmapMap.values());
 }
 
 /**
