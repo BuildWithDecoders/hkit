@@ -62,15 +62,15 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: fetchError.message }), { status: 500, headers: corsHeaders });
       }
       
-      // Flatten the structure for the client
+      // Flatten the structure for the client, using optional chaining for safety
       const users = profiles.map(p => ({
           id: p.id,
           firstName: p.first_name,
           lastName: p.last_name,
-          email: p.auth_user.email,
+          email: p.auth_user?.email || 'N/A', // FIX: Use optional chaining
           role: p.role,
-          status: p.auth_user.last_sign_in_at ? 'Active' : 'Inactive',
-          lastSignIn: p.auth_user.last_sign_in_at,
+          status: p.auth_user?.last_sign_in_at ? 'Active' : 'Inactive', // FIX: Use optional chaining
+          lastSignIn: p.auth_user?.last_sign_in_at, // FIX: Use optional chaining
       }));
 
       return new Response(JSON.stringify(users), {
